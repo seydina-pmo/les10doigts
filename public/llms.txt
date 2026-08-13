@@ -1,0 +1,18 @@
+# La Méthode des 10 Doigts
+
+> Méthode française d'apprentissage de la dactylographie en 100 niveaux, pour les écoles (primaire, secondaire) et les particuliers (professionnels, étudiants, autodidactes). Objectif : écrire au clavier les yeux fermés.
+
+La méthode repose sur une progression en 10 paliers et 100 niveaux, doigt par doigt et lettre par lettre, jusqu'à la frappe à l'aveugle. Trois critères sont mesurés en permanence : précision, vitesse, régularité. Dix minutes par jour pendant environ trois mois suffisent à un débutant pour atteindre une frappe fluide sans regarder le clavier.
+
+## Pages
+
+- [Accueil](/): présentation de la méthode et du parcours en 100 niveaux
+- [La méthode](/methode): les 10 paliers, du repos des doigts sur ASDF aux textes professionnels
+- [Écoles](/ecoles): licence établissement, comptes classe et élèves sans email, suivi de cohorte
+- [Particuliers](/particuliers): offre pour pros, étudiants et autodidactes, avec certifications Bronze, Argent, Or
+- [Tarifs](/tarifs): découverte gratuite, abonnement particulier, licence école (en FCFA)
+- [Contact](/contact): questions, partenariats, presse, ouverture d'un compte école
+
+## Blog
+
+- [Combien de temps pour apprendre à taper au clavier](/blog/temps-apprentissage): guide sur la durée d'apprentissage de la dactylographie et les facteurs qui l'influencent

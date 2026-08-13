@@ -1,0 +1,192 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* V2 custom tokens */
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-copper: var(--copper);
+  --color-copper-deep: var(--copper-deep);
+  --color-rule: var(--rule);
+
+  --font-serif: "DM Serif Display", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* ═══════════════════════════════════════════════════
+     V2 — MINIMALISTE ÉLÉGANT
+     Blanc pur + Navy + Bleu Électrique
+     ═══════════════════════════════════════════════════ */
+
+  /* Core surfaces */
+  --paper: #ffffff;
+  --paper-deep: #f5f5f5;
+  --card: #ffffff;
+
+  /* Text */
+  --ink: #1e3a5f;
+  --ink-soft: #5a7a9a;
+  --foreground: #1a1a2e;
+
+  /* Accent — Electric Blue */
+  --copper: #4361ee;
+  --copper-deep: #3451d1;
+
+  /* Borders */
+  --rule: #e2e8f0;
+
+  /* Semantic tokens */
+  --background: var(--paper);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: #4361ee;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e3a5f;
+  --muted: #f1f5f9;
+  --muted-foreground: #5a7a9a;
+  --accent: #4361ee;
+  --accent-foreground: #ffffff;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: var(--rule);
+  --input: #e2e8f0;
+  --ring: #4361ee;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { background-color: var(--color-background); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+}
+
+@utility rule-hr {
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--rule), transparent);
+}
+
+@utility ink-underline {
+  background-image: linear-gradient(var(--copper), var(--copper));
+  background-repeat: no-repeat;
+  background-size: 100% 3px;
+  background-position: 0 90%;
+  padding-bottom: 2px;
+}
+
+/* Focus mode — immersive dark for distraction-free typing */
+.focus-mode {
+  animation: focus-enter 0.3s ease-out;
+}
+
+.focus-mode .overflow-hidden {
+  border-color: rgba(67, 97, 238, 0.15);
+  background: #0f172a;
+}
+
+.focus-mode .border-b {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.focus-mode .border-t {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.focus-mode .bg-paper-deep\/60,
+.focus-mode .bg-paper-deep\/40 {
+  background: #0f172a;
+}
+
+.focus-mode .text-ink-soft,
+.focus-mode .text-ink-soft\/60 {
+  color: #94a3b8;
+}
+
+.focus-mode .text-foreground {
+  color: #e2e8f0;
+}
+
+.focus-mode .bg-card {
+  background: #1e293b;
+}
+
+.focus-mode .bg-card\/90 {
+  background: rgba(30, 41, 59, 0.95);
+}
+
+@keyframes focus-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Smooth page transitions */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glow effect for CTAs — electric blue */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(67, 97, 238, 0.2); }
+  50% { box-shadow: 0 0 35px rgba(67, 97, 238, 0.4); }
+}
+
+.glow-blue {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* Legacy class support */
+.glow-red {
+  animation: glow-pulse 2.5s ease-in-out infinite;
+}
