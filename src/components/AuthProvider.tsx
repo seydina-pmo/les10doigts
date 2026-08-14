@@ -37,34 +37,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function load() {
-      const { data } = await supabase.auth.getUser();
-      if (cancelled || !data.user) {
+      try {
+        const { data, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.warn("[AuthProvider] getUser error:", authError.message);
+        }
+        if (cancelled || !data?.user) {
+          setState((s) => ({ ...s, loading: false }));
+          return;
+        }
+
+        const u = data.user;
+
+        // Parallel fetch with individual error handling
+        const [roleResult, profileResult, attemptsResult] = await Promise.allSettled([
+          fetchRole(u.id),
+          supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle(),
+          supabase
+            .from("lesson_attempts")
+            .select("id")
+            .eq("user_id", u.id)
+            .limit(1),
+        ]);
+
+        if (cancelled) return;
+
+        const role = roleResult.status === "fulfilled" ? roleResult.value : null;
+        const displayName =
+          profileResult.status === "fulfilled"
+            ? (profileResult.value?.data?.display_name ?? "")
+            : "";
+        const attempts =
+          attemptsResult.status === "fulfilled"
+            ? attemptsResult.value?.data
+            : null;
+
+        setState({
+          user: u,
+          role,
+          displayName,
+          loading: false,
+          isFirstVisit: !attempts || attempts.length === 0,
+        });
+      } catch (err) {
+        console.error("[AuthProvider] Unexpected error:", err);
         setState((s) => ({ ...s, loading: false }));
-        return;
       }
-
-      const u = data.user;
-
-      // Parallel fetch: role + profile + check first visit
-      const [roleResult, profileResult, attemptsResult] = await Promise.all([
-        fetchRole(u.id),
-        supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle(),
-        supabase
-          .from("lesson_attempts")
-          .select("id")
-          .eq("user_id", u.id)
-          .limit(1),
-      ]);
-
-      if (cancelled) return;
-
-      setState({
-        user: u,
-        role: roleResult,
-        displayName: profileResult.data?.display_name ?? "",
-        loading: false,
-        isFirstVisit: !attemptsResult.data || attemptsResult.data.length === 0,
-      });
     }
 
     void load();

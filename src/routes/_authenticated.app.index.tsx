@@ -20,14 +20,19 @@ function Dashboard() {
   useEffect(() => {
     if (!user) return;
     void (async () => {
-      const { data } = await supabase
-        .from("lesson_attempts")
-        .select("level, mpm, accuracy, created_at, key_errors")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(500);
-      setRows((data as Row[] | null) ?? []);
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("lesson_attempts")
+          .select("level, mpm, accuracy, created_at, key_errors")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(500);
+        setRows((data as Row[] | null) ?? []);
+      } catch (err) {
+        console.warn("[Dashboard] Failed to load attempts:", err);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [user]);
 

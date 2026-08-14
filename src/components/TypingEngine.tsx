@@ -109,17 +109,22 @@ export function TypingEngine({
   useEffect(() => {
     if (state !== "done" || saved) return;
     void (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) return;
-      await supabase.from("lesson_attempts").insert({
-        user_id: data.user.id,
-        level,
-        mpm: stats.mpm,
-        accuracy: stats.acc,
-        duration_ms: stats.elapsedMs,
-        key_errors: keyErrors,
-      });
-      setSaved(true);
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) return;
+        await supabase.from("lesson_attempts").insert({
+          user_id: data.user.id,
+          level,
+          mpm: stats.mpm,
+          accuracy: stats.acc,
+          duration_ms: stats.elapsedMs,
+          key_errors: keyErrors,
+        });
+        setSaved(true);
+      } catch (err) {
+        console.warn("[TypingEngine] Save failed:", err);
+        setSaved(true); // Mark as saved to avoid retry loop
+      }
     })();
   }, [state, saved, level, stats, keyErrors]);
 
