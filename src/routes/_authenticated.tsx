@@ -12,21 +12,41 @@ function Gate() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Listen for auth state changes (including OAuth callback token processing)
+    let mounted = true;
+
+    // Listen for ALL auth state changes
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session) {
+      if (!mounted) return;
+
+      // Any event with a valid session → user is logged in
+      if (session) {
         setReady(true);
+        return;
       }
-      if (event === "SIGNED_OUT" || (event === "INITIAL_SESSION" && !session)) {
-        // Only redirect if there's no hash fragment (no pending OAuth callback)
-        const hasHashTokens = window.location.hash.includes("access_token");
-        if (!hasHashTokens) {
-          nav({ to: "/auth" });
+
+      // No session → only redirect if this is a definitive "no session" event
+      if (event === "SIGNED_OUT") {
+        setReady(false);
+        nav({ to: "/auth" });
+        return;
+      }
+
+      if (event === "INITIAL_SESSION" && !session) {
+        // Check for pending OAuth hash tokens before redirecting
+        const hash = window.location.hash;
+        if (hash.includes("access_token") || hash.includes("refresh_token")) {
+          // Supabase is still processing the hash — wait
+          return;
         }
+        // No session and no pending tokens → redirect
+        nav({ to: "/auth" });
       }
     });
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, [nav]);
 
   if (!ready) {

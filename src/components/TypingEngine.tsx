@@ -22,11 +22,19 @@ export function TypingEngine({
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [state, setState] = useState<EngineState>("ready");
   const [saved, setSaved] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Robust focus: try multiple times to ensure the hidden input is focused
-  // This fixes the bug where new users can't start exercises after login
+  // Use refs for values needed in the global keydown handler
+  // This avoids stale closures
+  const stateRef = useRef(state);
+  const typedRef = useRef(typed);
+  const textRef = useRef(text);
+  stateRef.current = state;
+  typedRef.current = typed;
+  textRef.current = text;
+
+  // Reset state when level changes
   useEffect(() => {
     setTyped("");
     setErrors(0);
@@ -34,20 +42,23 @@ export function TypingEngine({
     setStartedAt(null);
     setState("ready");
     setSaved(false);
+  }, [level]);
 
+  // Focus management: try to focus the textarea and keep retrying
+  useEffect(() => {
     function tryFocus() {
-      if (inputRef.current) {
+      if (inputRef.current && document.activeElement !== inputRef.current) {
         inputRef.current.focus({ preventScroll: true });
       }
     }
     tryFocus();
-    // Retry aggressively: SSR hydration, AuthProvider loading, route transitions
-    const timers = [50, 150, 300, 500, 800, 1200, 2000].map((ms) =>
+    // Retry aggressively after SSR hydration, auth loading, route transitions
+    const timers = [50, 150, 300, 500, 800, 1200, 2000, 3000].map((ms) =>
       setTimeout(tryFocus, ms),
     );
     const raf = requestAnimationFrame(tryFocus);
 
-    // Also re-focus when tab becomes visible (user switched tabs)
+    // Re-focus when tab becomes visible
     function onVisibility() {
       if (document.visibilityState === "visible") tryFocus();
     }
@@ -59,6 +70,54 @@ export function TypingEngine({
       document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [level]);
+
+  // GLOBAL keydown handler — works even if the hidden input loses focus
+  useEffect(() => {
+    function handleGlobalKeyDown(e: KeyboardEvent) {
+      // Don't capture if user is typing in another input/textarea elsewhere
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+        // Only allow if it's our own hidden textarea
+        if (e.target !== inputRef.current) return;
+      }
+
+      const currentState = stateRef.current;
+      const currentTyped = typedRef.current;
+      const currentText = textRef.current;
+
+      if (currentState === "done") return;
+      if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
+      
+      // Prevent default browser behavior (scrolling, shortcuts)
+      e.preventDefault();
+
+      // First keypress starts the exercise
+      if (currentState === "ready" && e.key !== "Backspace") {
+        setState("typing");
+        setStartedAt(Date.now());
+      }
+
+      if (e.key === "Backspace") {
+        setTyped((t) => t.slice(0, -1));
+        return;
+      }
+
+      const expected = currentText[currentTyped.length];
+      const key = e.key === "Enter" ? "\n" : e.key;
+      if (key !== expected) {
+        setErrors((n) => n + 1);
+        const id = keyIdFor(expected);
+        setKeyErrors((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+        return;
+      }
+      const nt = currentTyped + key;
+      setTyped(nt);
+      if (nt.length === currentText.length) setState("done");
+    }
+
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []); // Empty deps — uses refs for fresh values
 
   const nextChar = typed.length < text.length ? text[typed.length] : null;
   const highlight = nextChar ? keyIdFor(nextChar) : null;
@@ -73,37 +132,6 @@ export function TypingEngine({
         : Math.max(0, Math.round(((typed.length - errors) / (typed.length + errors)) * 100));
     return { mpm, acc, elapsedMs: Math.round(elapsed * 1000) };
   }, [typed, errors, startedAt]);
-
-  const onKey = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (state === "done") return;
-      if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
-      e.preventDefault();
-
-      // First keypress starts the exercise
-      if (state === "ready" && e.key !== "Backspace") {
-        setState("typing");
-        setStartedAt(Date.now());
-      }
-
-      if (e.key === "Backspace") {
-        setTyped((t) => t.slice(0, -1));
-        return;
-      }
-      const expected = text[typed.length];
-      const key = e.key === "Enter" ? "\n" : e.key;
-      if (key !== expected) {
-        setErrors((n) => n + 1);
-        const id = keyIdFor(expected);
-        setKeyErrors((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-        return;
-      }
-      const nt = typed + key;
-      setTyped(nt);
-      if (nt.length === text.length) setState("done");
-    },
-    [state, text, typed],
-  );
 
   // Save attempt when done
   useEffect(() => {
@@ -186,7 +214,7 @@ export function TypingEngine({
                 : "ko"
               : i === typed.length
                 ? "cur"
-                : "todo";
+                : "future";
           return (
             <span
               key={i}
@@ -216,20 +244,19 @@ export function TypingEngine({
         </div>
       </div>
 
-      {/* Hidden input for capturing keystrokes */}
-      <input
+      {/* Hidden textarea for capturing keystrokes (textarea works better than input for focus) */}
+      <textarea
         ref={inputRef}
-        onKeyDown={onKey}
-        className="sr-only"
+        className="fixed -top-[9999px] -left-[9999px] h-0 w-0 opacity-0"
         autoFocus
         aria-label="Zone de saisie de l'exercice"
         value=""
         onChange={() => {}}
-        // Prevent mobile keyboards from showing autocomplete
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
+        tabIndex={0}
       />
 
       {/* Done banner */}
@@ -251,4 +278,3 @@ export function TypingEngine({
     </div>
   );
 }
-
