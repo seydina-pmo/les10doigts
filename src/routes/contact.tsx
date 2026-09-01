@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -20,16 +21,32 @@ const CONTACT_EMAIL = "contact@les10doigts.com";
 
 function Page() {
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
+  const [err, setErr] = useState<string | null>(null);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const subject = encodeURIComponent(`Contact — ${name}`);
-    const body = encodeURIComponent(`${msg}\n\n— ${name} (${email})`);
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-    setSent(true);
+    setErr(null);
+    setSending(true);
+
+    try {
+      const { error } = await supabase.from("contact_messages").insert({
+        name,
+        email,
+        message: msg,
+      });
+
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      console.warn("[Contact] Submit failed:", err);
+      setErr("Une erreur est survenue. Réessayez ou écrivez-nous à " + CONTACT_EMAIL);
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -65,17 +82,11 @@ function Page() {
             </div>
             <h2 className="font-serif text-2xl">Message envoyé !</h2>
             <p className="text-sm text-ink-soft max-w-xs">
-              Votre client mail s&apos;est ouvert avec le message pré-rempli.
-              Si ce n&apos;est pas le cas, envoyez-nous un mail directement à :
+              Nous avons bien reçu votre message.
+              Notre équipe vous répondra sous 48h à l&apos;adresse que vous avez indiquée.
             </p>
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="font-medium text-copper hover:text-copper-deep underline underline-offset-4"
-            >
-              {CONTACT_EMAIL}
-            </a>
             <button
-              onClick={() => { setSent(false); setName(""); setEmail(""); setMsg(""); }}
+              onClick={() => { setSent(false); setName(""); setEmail(""); setMsg(""); setErr(null); }}
               className="mt-4 rounded-md border border-rule px-4 py-2 text-sm transition hover:bg-paper-deep"
             >
               Envoyer un autre message
@@ -92,6 +103,7 @@ function Page() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="rounded-md border border-rule bg-paper px-3 py-2"
+                disabled={sending}
               />
             </label>
             <label className="grid gap-1.5 text-sm">
@@ -103,6 +115,7 @@ function Page() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="rounded-md border border-rule bg-paper px-3 py-2"
+                disabled={sending}
               />
             </label>
             <label className="grid gap-1.5 text-sm">
@@ -114,14 +127,21 @@ function Page() {
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
                 className="rounded-md border border-rule bg-paper px-3 py-2"
+                disabled={sending}
               />
             </label>
+
+            {err && (
+              <p className="text-sm text-red-600">{err}</p>
+            )}
+
             <button
               type="submit"
+              disabled={sending}
               aria-label="Envoyer le message"
-              className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-white transition hover:bg-copper-deep"
+              className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-white transition hover:bg-copper-deep disabled:opacity-50"
             >
-              Envoyer
+              {sending ? "Envoi en cours…" : "Envoyer"}
             </button>
           </form>
         )}
