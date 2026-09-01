@@ -16,7 +16,7 @@ export const Route = createFileRoute("/contact")({
   component: Page,
 });
 
-const CONTACT_EMAIL = "methodedes10doigts@gmail.com";
+const CONTACT_EMAIL = "contact@les10doigts.com";
 
 function Page() {
   const [sent, setSent] = useState(false);
