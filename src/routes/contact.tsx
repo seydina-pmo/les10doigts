@@ -16,6 +16,7 @@ export const Route = createFileRoute("/contact")({
   component: Page,
 });
 
+const CONTACT_EMAIL = "methodedes10doigts@gmail.com";
 
 function Page() {
   const [sent, setSent] = useState(false);
@@ -27,7 +28,7 @@ function Page() {
     e.preventDefault();
     const subject = encodeURIComponent(`Contact — ${name}`);
     const body = encodeURIComponent(`${msg}\n\n— ${name} (${email})`);
-    window.location.href = `mailto:contact@les10doigts.com?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
     setSent(true);
   }
 
@@ -45,7 +46,7 @@ function Page() {
           <ul className="mt-8 space-y-3 text-sm">
             <li>
               <span className="font-mono text-xs uppercase tracking-wider text-ink-soft">Email</span>
-              <p className="mt-1">contact@les10doigts.com</p>
+              <p className="mt-1">{CONTACT_EMAIL}</p>
             </li>
             <li>
               <span className="font-mono text-xs uppercase tracking-wider text-ink-soft">Écoles</span>
@@ -54,53 +55,76 @@ function Page() {
           </ul>
         </div>
 
-        <form onSubmit={onSubmit} className="grid gap-4 rounded-2xl border border-rule bg-card p-6">
-          <label className="grid gap-1.5 text-sm">
-            <span className="text-ink-soft">Nom</span>
-            <input
-              required
-              maxLength={80}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="rounded-md border border-rule bg-paper px-3 py-2"
-            />
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            <span className="text-ink-soft">Email</span>
-            <input
-              required
-              type="email"
-              maxLength={200}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded-md border border-rule bg-paper px-3 py-2"
-            />
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            <span className="text-ink-soft">Message</span>
-            <textarea
-              required
-              maxLength={1500}
-              rows={5}
-              value={msg}
-              onChange={(e) => setMsg(e.target.value)}
-              className="rounded-md border border-rule bg-paper px-3 py-2"
-            />
-          </label>
-          <button
-            type="submit"
-            aria-label="Envoyer le message"
-            className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-white transition hover:bg-copper-deep"
-          >
-            Envoyer
-          </button>
-
-          {sent && (
-            <p className="text-xs text-ink-soft">
-              Votre client mail s&apos;est ouvert. Sinon, écrivez-nous directement à contact@les10doigts.com.
+        {sent ? (
+          /* ── Success confirmation ── */
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-rule bg-card p-10 text-center animate-fade-in">
+            <div className="grid h-16 w-16 place-items-center rounded-full bg-green-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <h2 className="font-serif text-2xl">Message envoyé !</h2>
+            <p className="text-sm text-ink-soft max-w-xs">
+              Votre client mail s&apos;est ouvert avec le message pré-rempli.
+              Si ce n&apos;est pas le cas, envoyez-nous un mail directement à :
             </p>
-          )}
-        </form>
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="font-medium text-copper hover:text-copper-deep underline underline-offset-4"
+            >
+              {CONTACT_EMAIL}
+            </a>
+            <button
+              onClick={() => { setSent(false); setName(""); setEmail(""); setMsg(""); }}
+              className="mt-4 rounded-md border border-rule px-4 py-2 text-sm transition hover:bg-paper-deep"
+            >
+              Envoyer un autre message
+            </button>
+          </div>
+        ) : (
+          /* ── Contact form ── */
+          <form onSubmit={onSubmit} className="grid gap-4 rounded-2xl border border-rule bg-card p-6">
+            <label className="grid gap-1.5 text-sm">
+              <span className="text-ink-soft">Nom</span>
+              <input
+                required
+                maxLength={80}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="rounded-md border border-rule bg-paper px-3 py-2"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="text-ink-soft">Email</span>
+              <input
+                required
+                type="email"
+                maxLength={200}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-md border border-rule bg-paper px-3 py-2"
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span className="text-ink-soft">Message</span>
+              <textarea
+                required
+                maxLength={1500}
+                rows={5}
+                value={msg}
+                onChange={(e) => setMsg(e.target.value)}
+                className="rounded-md border border-rule bg-paper px-3 py-2"
+              />
+            </label>
+            <button
+              type="submit"
+              aria-label="Envoyer le message"
+              className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-white transition hover:bg-copper-deep"
+            >
+              Envoyer
+            </button>
+          </form>
+        )}
       </section>
       <SiteFooter />
     </main>

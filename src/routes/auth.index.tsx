@@ -72,14 +72,19 @@ function AuthPage() {
   async function onGoogle() {
     setErr(null);
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/auth",
-      },
-    });
-    if (error) {
-      setErr(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/auth",
+        },
+      });
+      if (error) {
+        setErr(error.message);
+        setBusy(false);
+      }
+    } catch {
+      setErr("Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.");
       setBusy(false);
     }
   }

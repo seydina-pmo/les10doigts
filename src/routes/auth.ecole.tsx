@@ -66,23 +66,28 @@ function SchoolRequest() {
   async function submit() {
     setErr(null);
     setBusy(true);
-    const { error } = await supabase.from("schools").insert({
-      name: form.name,
-      contact_name: form.contact_name,
-      contact_email: form.contact_email,
-      contact_phone: form.contact_phone,
-      address: form.address,
-      nb_classes: form.nb_classes,
-      nb_students: form.nb_students,
-      message: form.contact_role
-        ? `[${form.contact_role}] ${form.message}`
-        : form.message,
-      status: "pending",
-      admin_user_id: null,
-    });
-    setBusy(false);
-    if (error) return setErr(error.message);
-    setOk(true);
+    try {
+      const { error } = await supabase.from("schools").insert({
+        name: form.name,
+        contact_name: form.contact_name,
+        contact_email: form.contact_email,
+        contact_phone: form.contact_phone,
+        address: form.address,
+        nb_classes: form.nb_classes,
+        nb_students: form.nb_students,
+        message: form.contact_role
+          ? `[${form.contact_role}] ${form.message}`
+          : form.message,
+        status: "pending",
+        admin_user_id: null,
+      });
+      setBusy(false);
+      if (error) return setErr(error.message);
+      setOk(true);
+    } catch (e) {
+      setBusy(false);
+      setErr("Impossible de contacter le serveur. Vérifiez votre connexion internet et réessayez.");
+    }
   }
 
   if (ok) {
