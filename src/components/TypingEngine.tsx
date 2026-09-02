@@ -198,7 +198,10 @@ export function TypingEngine({
         )}
 
         {/* Text area */}
-        <div className={"px-6 py-10 font-mono text-2xl leading-relaxed md:text-3xl" + (focusMode ? " text-3xl md:text-4xl" : "")}>
+        <div
+          className={"px-6 py-10 font-mono text-2xl leading-relaxed md:text-3xl" + (focusMode ? " text-3xl md:text-4xl" : "")}
+          style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+        >
           {text.split("").map((c, i) => {
             const s =
               i < typed.length

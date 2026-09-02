@@ -83,6 +83,33 @@ function TrainPage() {
 
   // Focus mode: immersive view with only text + keyboard
   if (focusMode) {
+    // Exit focus mode if paywall should show
+    if (!hasAccess) {
+      return (
+        <div
+          ref={focusContainerRef}
+          className="focus-mode fixed inset-0 z-50 flex flex-col bg-[oklch(0.15_0.01_55)]"
+        >
+          <div className="flex items-center justify-between px-6 py-3">
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-paper/50">
+              {lesson.title}
+            </span>
+            <button
+              onClick={toggleFocus}
+              className="rounded-md border border-paper/20 px-3 py-1.5 font-mono text-xs text-paper/60 transition hover:bg-paper/10 hover:text-paper"
+            >
+              ✕ Quitter
+            </button>
+          </div>
+          <div className="flex flex-1 items-center justify-center px-6 pb-10">
+            <div className="w-full max-w-lg text-center text-paper">
+              <Paywall currentLevel={level} />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         ref={focusContainerRef}
@@ -109,7 +136,15 @@ function TrainPage() {
               key={`focus-${level}`}
               level={level}
               text={lesson.text}
-              onNext={() => setLevel((l) => Math.min(100, l + 1))}
+              onNext={() => {
+                const nextLevel = Math.min(100, level + 1);
+                if (canAccessLevel(subscription, nextLevel)) {
+                  setLevel(nextLevel);
+                } else {
+                  setLevel(nextLevel);
+                  // Paywall will show on next render
+                }
+              }}
               focusMode
             />
           </div>

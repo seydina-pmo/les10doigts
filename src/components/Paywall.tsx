@@ -58,12 +58,14 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link
-          to="/tarifs"
+        <a
+          href="https://buy.stripe.com/test_00g00000000000000"
+          target="_blank"
+          rel="noopener noreferrer"
           className="rounded-md bg-copper px-6 py-3 text-sm font-medium text-paper shadow-sm transition hover:-translate-y-0.5 hover:bg-copper-deep"
         >
-          Voir les tarifs — à partir de 10 €/mois
-        </Link>
+          S&apos;abonner — 10 €/mois
+        </a>
         <Link
           to="/app"
           className="rounded-md border border-rule px-5 py-3 text-sm text-ink-soft transition hover:bg-paper-deep"
