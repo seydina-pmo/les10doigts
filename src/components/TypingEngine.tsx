@@ -140,20 +140,27 @@ export function TypingEngine({
     if (state !== "done" || saved) return;
     void (async () => {
       try {
-        const { data } = await supabase.auth.getUser();
-        if (!data.user) return;
-        await supabase.from("lesson_attempts").insert({
-          user_id: data.user.id,
+        const { data: session } = await supabase.auth.getSession();
+        if (!session.session?.user) {
+          console.warn("[TypingEngine] No session, cannot save");
+          return;
+        }
+        const userId = session.session.user.id;
+        const { error } = await supabase.from("lesson_attempts").insert({
+          user_id: userId,
           level,
           mpm: stats.mpm,
           accuracy: stats.acc,
           duration_ms: stats.elapsedMs,
           key_errors: keyErrors,
         });
-        setSaved(true);
+        if (error) {
+          console.error("[TypingEngine] Save error:", error.message, error.details, error.hint);
+        } else {
+          setSaved(true);
+        }
       } catch (err) {
-        console.warn("[TypingEngine] Save failed:", err);
-        setSaved(true);
+        console.error("[TypingEngine] Save exception:", err);
       }
     })();
   }, [state, saved, level, stats, keyErrors]);

@@ -31,34 +31,40 @@ export function useSubscription() {
     let cancelled = false;
 
     async function load() {
-      const { data: u } = await supabase.auth.getUser();
-      if (cancelled || !u.user) {
-        setLoading(false);
-        return;
-      }
+      try {
+        const { data: s } = await supabase.auth.getSession();
+        if (cancelled || !s.session?.user) {
+          setSub({ plan: "free", status: "active", expires_at: null });
+          setLoading(false);
+          return;
+        }
 
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("plan, status, expires_at")
-        .eq("user_id", u.user.id)
-        .maybeSingle();
+        const { data, error } = await supabase
+          .from("subscriptions")
+          .select("plan, status, expires_at")
+          .eq("user_id", s.session.user.id)
+          .maybeSingle();
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (data) {
-        // Check if expired
-        const isExpired =
-          data.expires_at && new Date(data.expires_at) < new Date();
-        setSub({
-          plan: data.plan as SubscriptionPlan,
-          status: isExpired ? "expired" : (data.status as SubscriptionStatus),
-          expires_at: data.expires_at,
-        });
-      } else {
-        // No subscription row = free user
+        if (error) {
+          console.warn("[Subscription] Query error:", error.message);
+          setSub({ plan: "free", status: "active", expires_at: null });
+        } else if (data) {
+          const isExpired =
+            data.expires_at && new Date(data.expires_at) < new Date();
+          setSub({
+            plan: data.plan as SubscriptionPlan,
+            status: isExpired ? "expired" : (data.status as SubscriptionStatus),
+            expires_at: data.expires_at,
+          });
+        } else {
+          setSub({ plan: "free", status: "active", expires_at: null });
+        }
+      } catch {
         setSub({ plan: "free", status: "active", expires_at: null });
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
     void load();

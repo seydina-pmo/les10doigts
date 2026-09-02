@@ -1,4 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const NAV = [
   { to: "/methode", label: "La méthode" },
@@ -10,6 +12,18 @@ const NAV = [
 ] as const;
 
 export function SiteHeader() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setLoggedIn(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setLoggedIn(!!s);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#e2e8f0]/80 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
@@ -38,10 +52,10 @@ export function SiteHeader() {
           ))}
         </nav>
         <Link
-          to="/auth"
+          to={loggedIn ? "/app" : "/auth"}
           className="rounded-full bg-[#4361ee] px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-[#4361ee]/20 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-md"
         >
-          Essayer
+          {loggedIn ? "Mon espace" : "Essayer"}
         </Link>
       </div>
     </header>
