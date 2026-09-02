@@ -2,8 +2,6 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
-import { KickedBanner } from "@/components/Paywall";
-import { useSessionGuard } from "@/lib/session-guard";
 
 export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({ meta: [{ title: "Mon espace, La Méthode des 10 Doigts" }] }),
@@ -21,13 +19,15 @@ function AppLayout() {
 function AppShell() {
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { role, displayName } = useAuth();
-  const { status: sessionStatus } = useSessionGuard();
+  const { user, role, displayName } = useAuth();
 
-  // Show kicked banner if session was displaced
-  if (sessionStatus === "kicked") {
-    return <KickedBanner />;
-  }
+  // Get display name: try profile, then Google metadata, then email
+  const name =
+    displayName ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "Mon compte";
 
   async function logout() {
     await supabase.auth.signOut();
@@ -53,7 +53,7 @@ function AppShell() {
         </Link>
         <div className="flex items-center gap-4 text-sm text-ink-soft">
           <span>
-            {displayName || "compte"} ·{" "}
+            {name} ·{" "}
             <span className="text-copper-deep">{role ?? "particulier"}</span>
           </span>
           <button
