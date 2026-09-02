@@ -16,7 +16,7 @@ export const Route = createFileRoute("/tarifs")({
 });
 
 
-const plans = [
+const plans: { name: string; price: string; note: string; bullets: string[]; cta: string; to?: string; href?: string; featured?: boolean }[] = [
   {
     name: "Découverte",
     price: "Gratuit",
@@ -35,7 +35,7 @@ const plans = [
       "Certifications Bronze · Argent · Or",
     ],
     cta: "S'abonner",
-    to: "/auth" as const,
+    href: "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200",
     featured: true,
   },
   {
@@ -85,17 +85,33 @@ function Page() {
                 </li>
               ))}
             </ul>
-            <Link
-              to={p.to}
-              className={
-                "mt-8 inline-block w-full rounded-md px-4 py-2.5 text-center text-sm font-medium transition " +
-                (p.featured
-                  ? "bg-copper text-paper hover:bg-copper-deep"
-                  : "border border-rule hover:bg-paper-deep")
-              }
-            >
-              {p.cta}
-            </Link>
+            {p.href ? (
+              <a
+                href={p.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={
+                  "mt-8 inline-block w-full rounded-md px-4 py-2.5 text-center text-sm font-medium transition " +
+                  (p.featured
+                    ? "bg-copper text-paper hover:bg-copper-deep"
+                    : "border border-rule hover:bg-paper-deep")
+                }
+              >
+                {p.cta}
+              </a>
+            ) : (
+              <Link
+                to={p.to!}
+                className={
+                  "mt-8 inline-block w-full rounded-md px-4 py-2.5 text-center text-sm font-medium transition " +
+                  (p.featured
+                    ? "bg-copper text-paper hover:bg-copper-deep"
+                    : "border border-rule hover:bg-paper-deep")
+                }
+              >
+                {p.cta}
+              </Link>
+            )}
           </article>
         ))}
       </section>

@@ -59,7 +59,7 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <a
-          href="https://buy.stripe.com/test_00g00000000000000"
+          href="https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200"
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-md bg-copper px-6 py-3 text-sm font-medium text-paper shadow-sm transition hover:-translate-y-0.5 hover:bg-copper-deep"
