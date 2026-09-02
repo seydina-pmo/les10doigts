@@ -54,10 +54,8 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Show email verification screen instead of redirecting
-        setView("check-email");
-        setBusy(false);
-        return;
+        // Email confirmation is disabled — user is logged in immediately
+        // onAuthStateChange in the Gate will redirect to /app
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

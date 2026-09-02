@@ -22,15 +22,19 @@ function TrainPage() {
   // Resume at the highest level already attempted.
   useEffect(() => {
     void (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data } = await supabase
-        .from("lesson_attempts")
-        .select("level")
-        .eq("user_id", u.user.id)
-        .order("level", { ascending: false })
-        .limit(1);
-      if (data && data[0]) setLevel(Math.min(100, (data[0].level as number) + 1));
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        if (!u.user) return;
+        const { data } = await supabase
+          .from("lesson_attempts")
+          .select("level")
+          .eq("user_id", u.user.id)
+          .order("level", { ascending: false })
+          .limit(1);
+        if (data && data[0]) setLevel(Math.min(100, (data[0].level as number) + 1));
+      } catch {
+        // Silently fail — just start at level 1
+      }
     })();
   }, []);
 
