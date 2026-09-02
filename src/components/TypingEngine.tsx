@@ -179,62 +179,62 @@ export function TypingEngine({
         </span>
       </div>
 
-      {/* Ready overlay — shown before first keypress. Clicking anywhere focuses the input. */}
-      {state === "ready" && (
-        <div
-          className="relative cursor-text"
-          onClick={() => inputRef.current?.focus({ preventScroll: true })}
-        >
-          <div className="absolute inset-0 z-10 grid place-items-center bg-card/90 backdrop-blur-[2px]">
-            <div className="text-center animate-fade-in">
-              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-copper/15">
+      {/* Ready overlay + Text area — wrapped together so overlay only covers text */}
+      <div className="relative min-h-[180px]">
+        {state === "ready" && (
+          <div
+            className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px] cursor-text"
+            onClick={() => inputRef.current?.focus({ preventScroll: true })}
+          >
+            <div className="text-center animate-fade-in px-4">
+              <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-copper/15">
                 <span className="text-2xl">⌨️</span>
               </div>
-              <p className="font-serif text-xl text-foreground">
+              <p className="font-serif text-lg text-foreground">
                 Placez vos doigts sur le clavier
               </p>
-              <p className="mt-2 text-sm text-ink-soft">
+              <p className="mt-1.5 text-sm text-ink-soft">
                 Main gauche sur <strong className="font-mono text-foreground">Q S D F</strong> · Main droite sur <strong className="font-mono text-foreground">J K L M</strong>
               </p>
-              <p className="mt-4 animate-pulse font-mono text-xs uppercase tracking-[0.2em] text-copper">
+              <p className="mt-3 animate-pulse font-mono text-xs uppercase tracking-[0.2em] text-copper">
                 tapez la première lettre pour commencer
               </p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Text area */}
-      <div className={"px-6 py-10 font-mono text-2xl leading-relaxed md:text-3xl" + (focusMode ? " text-3xl md:text-4xl" : "")}>
-        {text.split("").map((c, i) => {
-          const s =
-            i < typed.length
-              ? typed[i] === c
-                ? "ok"
-                : "ko"
-              : i === typed.length
-                ? "cur"
-                : "future";
-          return (
-            <span
-              key={i}
-              className={
-                s === "ok"
-                  ? "text-foreground"
-                  : s === "ko"
-                    ? "rounded-sm bg-destructive/20 text-destructive"
-                    : s === "cur"
-                      ? "rounded-sm bg-copper/30 text-foreground"
-                      : "text-ink-soft/60"
-              }
-            >
-              {c === " " ? "\u00A0" : c}
-            </span>
-          );
-        })}
-        {state === "typing" && (
-          <span className="ml-0.5 inline-block h-7 w-[2px] translate-y-1 animate-pulse bg-copper" />
         )}
+
+        {/* Text area */}
+        <div className={"px-6 py-10 font-mono text-2xl leading-relaxed md:text-3xl" + (focusMode ? " text-3xl md:text-4xl" : "")}>
+          {text.split("").map((c, i) => {
+            const s =
+              i < typed.length
+                ? typed[i] === c
+                  ? "ok"
+                  : "ko"
+                : i === typed.length
+                  ? "cur"
+                  : "future";
+            return (
+              <span
+                key={i}
+                className={
+                  s === "ok"
+                    ? "text-foreground"
+                    : s === "ko"
+                      ? "rounded-sm bg-destructive/20 text-destructive"
+                      : s === "cur"
+                        ? "rounded-sm bg-copper/30 text-foreground"
+                        : "text-ink-soft/60"
+                }
+              >
+                {c === " " ? "\u00A0" : c}
+              </span>
+            );
+          })}
+          {state === "typing" && (
+            <span className="ml-0.5 inline-block h-7 w-[2px] translate-y-1 animate-pulse bg-copper" />
+          )}
+        </div>
       </div>
 
       {/* Keyboard */}
