@@ -100,37 +100,61 @@ export function TypingEngine({
         ? 100
         : Math.max(0, Math.round(((typed.length - errors) / (typed.length + errors)) * 100));
     return { mpm, acc, elapsedMs: Math.round(elapsed * 1000) };
-  }, [typed, errors, startedAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typed.length, errors, startedAt]);
 
-  // Save attempt when done
+  // Save attempt when done — use refs to avoid stale closures
+  const levelRef = useRef(level);
+  levelRef.current = level;
+  const keyErrorsRef = useRef(keyErrors);
+  keyErrorsRef.current = keyErrors;
+
   useEffect(() => {
     if (state !== "done" || saved) return;
+
+    // Capture stats at this exact moment
+    const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : 0;
+    const words = typed.length / 5;
+    const mpm = elapsed > 0 ? Math.round((words / elapsed) * 60) : 0;
+    const acc =
+      typed.length === 0
+        ? 100
+        : Math.max(0, Math.round(((typed.length - errors) / (typed.length + errors)) * 100));
+    const duration = Math.round(elapsed * 1000);
+    const errs = { ...keyErrorsRef.current };
+    const lvl = levelRef.current;
+
+    setSaved(true); // Set immediately to prevent double saves
+
     void (async () => {
       try {
         const { data: s } = await supabase.auth.getSession();
         if (!s.session?.user) {
-          console.warn("[TypingEngine] No session");
+          console.warn("[TypingEngine] No session — cannot save");
           return;
         }
         const { error } = await supabase.from("lesson_attempts").insert({
           user_id: s.session.user.id,
-          level,
-          mpm: stats.mpm,
-          accuracy: stats.acc,
-          duration_ms: stats.elapsedMs,
-          key_errors: keyErrors,
+          level: lvl,
+          mpm,
+          accuracy: acc,
+          duration_ms: duration,
+          key_errors: errs,
         });
         if (error) {
           console.error("[TypingEngine] Save error:", error.message);
+          setSaved(false); // Allow retry
         } else {
-          console.log("[TypingEngine] Saved attempt for level", level);
-          setSaved(true);
+          console.log("[TypingEngine] ✅ Saved level", lvl, "mpm:", mpm, "acc:", acc);
         }
       } catch (err) {
         console.error("[TypingEngine] Save exception:", err);
+        setSaved(false);
       }
     })();
-  }, [state, saved, level, stats, keyErrors]);
+    // Only re-run when state transitions to done
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <div
