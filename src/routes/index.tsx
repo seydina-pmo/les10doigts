@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { KeyboardFR, FINGER_LEGEND } from "@/components/KeyboardFR";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
@@ -265,6 +266,14 @@ function AudienceCard({
 }
 
 function CTA() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setLoggedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setLoggedIn(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   return (
     <section className="bg-[#1e3a5f] py-24">
       <div className="mx-auto max-w-5xl px-6 text-center">
@@ -273,18 +282,37 @@ function CTA() {
           Dix minutes aujourd&apos;hui, un clavier maîtrisé dans trois mois.
         </h2>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
-          <Link
-            to="/auth"
-            className="rounded-full bg-[#4361ee] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/30 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl"
-          >
-            Créer un compte particulier
-          </Link>
-          <Link
-            to="/auth/ecole"
-            className="rounded-full border-2 border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/5"
-          >
-            Ouvrir un compte école
-          </Link>
+          {loggedIn ? (
+            <>
+              <Link
+                to="/app/train"
+                className="rounded-full bg-[#4361ee] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/30 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl"
+              >
+                🚀 S&apos;entraîner maintenant
+              </Link>
+              <Link
+                to="/app"
+                className="rounded-full border-2 border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/5"
+              >
+                Mon tableau de bord
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/auth"
+                className="rounded-full bg-[#4361ee] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/30 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl"
+              >
+                Créer un compte particulier
+              </Link>
+              <Link
+                to="/auth/ecole"
+                className="rounded-full border-2 border-white/20 px-8 py-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-white/5"
+              >
+                Ouvrir un compte école
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </section>
