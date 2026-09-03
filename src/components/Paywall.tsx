@@ -71,7 +71,6 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </p>
     </div>
   );
-  );
 }
 
 /**
