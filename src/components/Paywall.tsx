@@ -1,14 +1,16 @@
 import { Link } from "@tanstack/react-router";
 
+const STRIPE_URL = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200";
+
 /**
  * Paywall — displayed when a free user tries to access level > 3.
- * Encourages upgrade with clear messaging and links to pricing.
+ * Uses explicit colors to be readable on both light and dark backgrounds.
  */
 export function Paywall({ currentLevel }: { currentLevel: number }) {
   return (
-    <div className="rounded-2xl border-2 border-copper/30 bg-card p-8 text-center shadow-[0_30px_60px_-30px_rgba(59,130,246,0.15)] animate-fade-in">
+    <div className="rounded-2xl border-2 border-[#4361ee]/40 bg-white p-8 text-center shadow-2xl animate-fade-in">
       {/* Lock icon */}
-      <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-copper/15">
+      <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-full bg-[#4361ee]/10">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="32"
@@ -19,65 +21,56 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="text-copper"
+          className="text-[#4361ee]"
         >
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
       </div>
 
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-copper-deep">
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#4361ee]">
         contenu premium
       </p>
-      <h2 className="mt-3 font-serif text-3xl">
+      <h2 className="mt-3 font-serif text-3xl text-[#1e3a5f]">
         Bravo, vous avez terminé les 3 niveaux gratuits !
       </h2>
-      <p className="mx-auto mt-4 max-w-md text-ink-soft">
+      <p className="mx-auto mt-4 max-w-md text-[#5a7a9a]">
         Le niveau {currentLevel} fait partie du parcours complet (100 niveaux).
         Abonnez-vous pour continuer votre progression et décrocher vos certifications.
       </p>
 
       {/* What you get */}
       <div className="mx-auto mt-8 grid max-w-sm gap-2 text-left text-sm">
-        <div className="flex items-center gap-3 rounded-lg border border-rule bg-paper-deep p-3">
-          <span className="text-copper">✓</span>
-          <span>100 niveaux progressifs</span>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-rule bg-paper-deep p-3">
-          <span className="text-copper">✓</span>
-          <span>Certifications Bronze · Argent · Or</span>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-rule bg-paper-deep p-3">
-          <span className="text-copper">✓</span>
-          <span>Heatmap des touches à retravailler</span>
-        </div>
-        <div className="flex items-center gap-3 rounded-lg border border-rule bg-paper-deep p-3">
-          <span className="text-copper">✓</span>
-          <span>Mode Focus plein écran</span>
-        </div>
+        {["100 niveaux progressifs", "Certifications Bronze · Argent · Or", "Heatmap des touches à retravailler", "Mode Focus plein écran"].map((item) => (
+          <div key={item} className="flex items-center gap-3 rounded-lg border border-[#e2e8f0] bg-[#f8fafc] p-3">
+            <span className="text-[#4361ee] font-bold">✓</span>
+            <span className="text-[#1e3a5f]">{item}</span>
+          </div>
+        ))}
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <a
-          href="https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200"
+          href={STRIPE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-md bg-copper px-6 py-3 text-sm font-medium text-paper shadow-sm transition hover:-translate-y-0.5 hover:bg-copper-deep"
+          className="rounded-md bg-[#4361ee] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#3451d1]"
         >
           S&apos;abonner — 10 €/mois
         </a>
         <Link
           to="/app"
-          className="rounded-md border border-rule px-5 py-3 text-sm text-ink-soft transition hover:bg-paper-deep"
+          className="rounded-md border border-[#e2e8f0] px-5 py-3 text-sm text-[#5a7a9a] transition hover:bg-[#f1f5f9]"
         >
           Retour au tableau de bord
         </Link>
       </div>
 
-      <p className="mt-6 text-xs text-ink-soft">
+      <p className="mt-6 text-xs text-[#5a7a9a]">
         Paiement sécurisé par carte bancaire ou Mobile Money.
       </p>
     </div>
+  );
   );
 }
 

@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
+const STRIPE_URL = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200";
+
 export const Route = createFileRoute("/particuliers")({
   head: () => ({
     meta: [
@@ -88,12 +90,14 @@ function Page() {
           >
             🚀 Essai gratuit — 3 niveaux offerts
           </Link>
-          <Link
-            to="/auth"
+          <a
+            href={STRIPE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-md border border-copper/40 bg-copper/5 px-6 py-3.5 text-sm font-medium text-copper-deep transition hover:-translate-y-0.5 hover:bg-copper/10"
           >
             💳 S&apos;abonner — 10 € / mois
-          </Link>
+          </a>
         </div>
       </section>
 
@@ -175,12 +179,14 @@ function Page() {
               ))}
             </ul>
 
-            <Link
-              to="/auth"
+            <a
+              href={STRIPE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-8 block rounded-md bg-[#4361ee] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[#3451d1]"
             >
               S&apos;abonner maintenant
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -235,12 +241,14 @@ function Page() {
             >
               Essai gratuit — 3 niveaux offerts
             </Link>
-            <Link
-              to="/tarifs"
+            <a
+              href={STRIPE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-md border border-white/20 px-6 py-3 text-sm font-medium text-foreground transition hover:bg-white/5"
             >
-              Voir tous les tarifs
-            </Link>
+              S&apos;abonner — 10 €/mois
+            </a>
           </div>
         </div>
       </section>
