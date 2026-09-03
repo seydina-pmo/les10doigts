@@ -109,12 +109,20 @@ function SchoolRequest() {
             établissement est activé et vous recevez les identifiants du
             responsable.
           </p>
-          <Link
-            to="/"
-            className="mx-auto inline-block rounded-md border border-paper/25 px-5 py-2 text-sm text-paper hover:bg-paper/10"
-          >
-            Retour à l&apos;accueil
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/"
+              className="inline-block rounded-md bg-copper px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-copper-deep"
+            >
+              ← Retour à l&apos;accueil
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-block rounded-md border border-paper/40 px-5 py-2.5 text-sm text-paper transition hover:bg-paper/10"
+            >
+              Nous contacter
+            </Link>
+          </div>
         </div>
       </Shell>
     );

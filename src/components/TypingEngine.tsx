@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { KeyboardFR } from "@/components/KeyboardFR";
 import { keyIdFor } from "@/lib/exercises";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,23 +22,9 @@ export function TypingEngine({
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [state, setState] = useState<EngineState>("ready");
   const [saved, setSaved] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Mutable refs for the global keydown handler — updated synchronously
-  const stateRef = useRef(state);
-  const typedRef = useRef(typed);
-  const textRef = useRef(text);
-  const errorsRef = useRef(errors);
-  const keyErrorsRef = useRef(keyErrors);
-
-  // Keep refs in sync with state
-  stateRef.current = state;
-  typedRef.current = typed;
-  textRef.current = text;
-  errorsRef.current = errors;
-  keyErrorsRef.current = keyErrors;
-
-  // Reset state when level changes
+  // Reset on level change
   useEffect(() => {
     setTyped("");
     setErrors(0);
@@ -46,80 +32,61 @@ export function TypingEngine({
     setStartedAt(null);
     setState("ready");
     setSaved(false);
-    // Also reset refs immediately
-    typedRef.current = "";
-    stateRef.current = "ready";
-    errorsRef.current = 0;
-    keyErrorsRef.current = {};
+    // Re-focus the hidden input
+    setTimeout(() => inputRef.current?.focus(), 50);
   }, [level]);
 
-  // Update text ref when text prop changes
+  // Auto-focus on mount
   useEffect(() => {
-    textRef.current = text;
-  }, [text]);
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }, []);
 
-  // GLOBAL keydown handler — works even if no element has focus
-  useEffect(() => {
-    function handleGlobalKeyDown(e: KeyboardEvent) {
-      // Don't capture if user is typing in another real input
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
-        return; // Let other inputs work normally
-      }
+  // Re-focus when clicking anywhere in the container
+  const focusInput = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
 
-      const curState = stateRef.current;
-      const curTyped = typedRef.current;
-      const curText = textRef.current;
+  // Core key handler — runs on every keydown in the hidden input
+  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (state === "done") return;
 
-      if (curState === "done") return;
-      if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
+    // Only handle printable chars, backspace, enter
+    if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
 
-      // Prevent default browser behavior
-      e.preventDefault();
+    e.preventDefault();
+    e.stopPropagation();
 
-      // First keypress starts the exercise
-      if (curState === "ready" && e.key !== "Backspace") {
-        stateRef.current = "typing";
-        setState("typing");
-        setStartedAt(Date.now());
-      }
-
-      if (e.key === "Backspace") {
-        const newTyped = curTyped.slice(0, -1);
-        typedRef.current = newTyped; // Update ref IMMEDIATELY
-        setTyped(newTyped);
-        return;
-      }
-
-      const expected = curText[curTyped.length];
-      if (!expected) return; // Safety check
-
-      const key = e.key === "Enter" ? "\n" : e.key;
-      if (key !== expected) {
-        const newErrors = errorsRef.current + 1;
-        errorsRef.current = newErrors; // Update ref IMMEDIATELY
-        setErrors(newErrors);
-        const id = keyIdFor(expected);
-        const newKeyErrors = { ...keyErrorsRef.current, [id]: (keyErrorsRef.current[id] ?? 0) + 1 };
-        keyErrorsRef.current = newKeyErrors;
-        setKeyErrors(newKeyErrors);
-        return;
-      }
-
-      // Correct key!
-      const newTyped = curTyped + key;
-      typedRef.current = newTyped; // Update ref IMMEDIATELY
-      setTyped(newTyped);
-
-      if (newTyped.length === curText.length) {
-        stateRef.current = "done";
-        setState("done");
-      }
+    // Start on first keypress
+    if (state === "ready" && e.key !== "Backspace") {
+      setState("typing");
+      setStartedAt(Date.now());
     }
 
-    document.addEventListener("keydown", handleGlobalKeyDown);
-    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []); // Empty deps — all values read from refs
+    // Backspace
+    if (e.key === "Backspace") {
+      setTyped((t) => t.slice(0, -1));
+      return;
+    }
+
+    const expected = text[typed.length];
+    if (!expected) return;
+
+    const key = e.key === "Enter" ? "\n" : e.key;
+
+    if (key !== expected) {
+      setErrors((n) => n + 1);
+      const id = keyIdFor(expected);
+      setKeyErrors((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+      return;
+    }
+
+    // Correct!
+    const next = typed + key;
+    setTyped(next);
+    if (next.length === text.length) {
+      setState("done");
+    }
+  }
 
   const nextChar = typed.length < text.length ? text[typed.length] : null;
   const highlight = nextChar ? keyIdFor(nextChar) : null;
@@ -140,14 +107,13 @@ export function TypingEngine({
     if (state !== "done" || saved) return;
     void (async () => {
       try {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session.session?.user) {
-          console.warn("[TypingEngine] No session, cannot save");
+        const { data: s } = await supabase.auth.getSession();
+        if (!s.session?.user) {
+          console.warn("[TypingEngine] No session");
           return;
         }
-        const userId = session.session.user.id;
         const { error } = await supabase.from("lesson_attempts").insert({
-          user_id: userId,
+          user_id: s.session.user.id,
           level,
           mpm: stats.mpm,
           accuracy: stats.acc,
@@ -155,8 +121,9 @@ export function TypingEngine({
           key_errors: keyErrors,
         });
         if (error) {
-          console.error("[TypingEngine] Save error:", error.message, error.details, error.hint);
+          console.error("[TypingEngine] Save error:", error.message);
         } else {
+          console.log("[TypingEngine] Saved attempt for level", level);
           setSaved(true);
         }
       } catch (err) {
@@ -167,10 +134,28 @@ export function TypingEngine({
 
   return (
     <div
-      ref={containerRef}
       className="overflow-hidden rounded-2xl border border-rule bg-card cursor-text"
-      tabIndex={0}
+      onClick={focusInput}
     >
+      {/* Hidden input — all keyboard events go through here */}
+      <input
+        ref={inputRef}
+        type="text"
+        className="fixed -top-[9999px] -left-[9999px] h-0 w-0 opacity-0"
+        autoFocus
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        onKeyDown={handleKey}
+        onBlur={() => {
+          // Re-focus after a short delay (prevents losing focus)
+          if (state !== "done") {
+            setTimeout(() => inputRef.current?.focus(), 10);
+          }
+        }}
+      />
+
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-rule bg-paper-deep/60 px-5 py-3 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
         <span>leçon {String(level).padStart(2, "0")}</span>
@@ -183,10 +168,13 @@ export function TypingEngine({
         </span>
       </div>
 
-      {/* Ready overlay + Text area — wrapped together so overlay only covers text */}
+      {/* Ready overlay + Text area */}
       <div className="relative min-h-[180px]">
         {state === "ready" && (
-          <div className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px] cursor-text">
+          <div
+            className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px] cursor-text"
+            onClick={focusInput}
+          >
             <div className="text-center animate-fade-in px-4">
               <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-copper/15">
                 <span className="text-2xl">⌨️</span>
