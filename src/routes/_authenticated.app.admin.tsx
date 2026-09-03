@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/app/admin")({
 
 /* ---------- types ---------- */
 
-type Tab = "overview" | "users" | "subscriptions" | "schools";
+type Tab = "overview" | "users" | "subscriptions" | "messages" | "schools";
 
 type School = {
   id: string;
@@ -63,6 +63,15 @@ type UserRole = {
   role: string;
 };
 
+type ContactMsg = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string | null;
+  message: string;
+  created_at: string;
+};
+
 /* ---------- main page ---------- */
 
 function AdminPage() {
@@ -83,6 +92,7 @@ function AdminPage() {
   const [subs, setSubs] = useState<Sub[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [schools, setSchools] = useState<School[]>([]);
+  const [messages, setMessages] = useState<ContactMsg[]>([]);
   const [credentials, setCreds] = useState<{ email: string; password: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -105,17 +115,19 @@ function AdminPage() {
         setIsAdmin(true);
 
         // Load all data in parallel
-        const [pRes, rRes, sRes, aRes] = await Promise.all([
+        const [pRes, rRes, sRes, aRes, mRes] = await Promise.all([
           supabase.from("profiles").select("id, display_name, email, created_at").order("created_at", { ascending: false }),
           supabase.from("user_roles").select("user_id, role"),
           supabase.from("subscriptions").select("id, user_id, plan, status, current_period_end, created_at").order("created_at", { ascending: false }),
           supabase.from("lesson_attempts").select("user_id, level, mpm, accuracy, created_at").order("created_at", { ascending: false }).limit(2000),
+          supabase.from("contact_messages").select("*").order("created_at", { ascending: false }),
         ]);
 
         setProfiles((pRes.data as Profile[]) ?? []);
         setRoles((rRes.data as UserRole[]) ?? []);
         setSubs((sRes.data as Sub[]) ?? []);
         setAttempts((aRes.data as Attempt[]) ?? []);
+        setMessages((mRes.data as ContactMsg[]) ?? []);
 
         // Schools via server function
         try {
@@ -183,6 +195,7 @@ function AdminPage() {
     { id: "overview", label: "Vue d'ensemble", icon: "📊" },
     { id: "users", label: "Utilisateurs", icon: "👥" },
     { id: "subscriptions", label: "Abonnements", icon: "💳" },
+    { id: "messages", label: `Messages (${messages.length})`, icon: "✉️" },
     { id: "schools", label: "Écoles", icon: "🏫" },
   ];
 
@@ -224,13 +237,16 @@ function AdminPage() {
       {/* Tab content */}
       <div className="mt-6">
         {tab === "overview" && (
-          <OverviewTab profiles={profiles} roles={roles} subs={subs} attempts={attempts} schools={schools} />
+          <OverviewTab profiles={profiles} roles={roles} subs={subs} attempts={attempts} schools={schools} messages={messages} />
         )}
         {tab === "users" && (
           <UsersTab profiles={profiles} roles={roles} attempts={attempts} subs={subs} />
         )}
         {tab === "subscriptions" && (
           <SubscriptionsTab subs={subs} profiles={profiles} />
+        )}
+        {tab === "messages" && (
+          <MessagesTab messages={messages} />
         )}
         {tab === "schools" && (
           <SchoolsTab
@@ -270,9 +286,9 @@ function AdminPage() {
 /* ================================================== */
 
 function OverviewTab({
-  profiles, roles, subs, attempts, schools,
+  profiles, roles, subs, attempts, schools, messages,
 }: {
-  profiles: Profile[]; roles: UserRole[]; subs: Sub[]; attempts: Attempt[]; schools: School[];
+  profiles: Profile[]; roles: UserRole[]; subs: Sub[]; attempts: Attempt[]; schools: School[]; messages: ContactMsg[];
 }) {
   const activeSubs = subs.filter((s) => s.status === "active").length;
   const pendingSchools = schools.filter((s) => s.status === "pending").length;
@@ -290,6 +306,7 @@ function OverviewTab({
     { label: "Abonnés actifs", value: activeSubs, sub: `${subs.length} total`, color: "#10b981" },
     { label: "Revenus estimés", value: `${revenue} €`, sub: "par mois", color: "#f59e0b" },
     { label: "Niveaux complétés", value: totalLessons, sub: `+${recentAttempts} cette semaine`, color: "#8b5cf6" },
+    { label: "Messages", value: messages.length, sub: "messages reçus", color: "#06b6d4" },
     { label: "Écoles actives", value: activeSchools, sub: `${pendingSchools} en attente`, color: "#ec4899" },
   ];
 
@@ -303,7 +320,7 @@ function OverviewTab({
   return (
     <div className="space-y-8">
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {kpis.map((k) => (
           <div key={k.label} className="rounded-xl border border-[#e2e8f0] bg-white p-5 shadow-sm">
             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">{k.label}</p>
@@ -362,6 +379,62 @@ function OverviewTab({
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================== */
+/*  TAB — MESSAGES                                     */
+/* ================================================== */
+
+function MessagesTab({ messages }: { messages: ContactMsg[] }) {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  return (
+    <div>
+      <div className="mb-4 rounded-xl border border-[#e2e8f0] bg-white p-5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Total messages</p>
+        <p className="mt-2 font-serif text-3xl text-[#06b6d4]">{messages.length}</p>
+      </div>
+
+      <div className="space-y-3">
+        {messages.map((m) => (
+          <article
+            key={m.id}
+            className={"rounded-xl border bg-white transition-shadow " + (expanded === m.id ? "border-[#4361ee] shadow-md" : "border-[#e2e8f0]")}
+          >
+            <button
+              onClick={() => setExpanded(expanded === m.id ? null : m.id)}
+              className="flex w-full items-center justify-between p-5 text-left"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
+                  <p className="font-medium text-[#1e3a5f] truncate">{m.name}</p>
+                  <span className="text-xs text-[#5a7a9a]">{m.email}</span>
+                </div>
+                {m.subject && <p className="mt-1 text-sm text-[#5a7a9a] truncate">{m.subject}</p>}
+              </div>
+              <span className="ml-4 shrink-0 text-xs text-[#5a7a9a]">
+                {new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+              </span>
+            </button>
+            {expanded === m.id && (
+              <div className="border-t border-[#e2e8f0] px-5 py-4">
+                <p className="whitespace-pre-wrap text-sm text-[#1e3a5f] leading-relaxed">{m.message}</p>
+                <a
+                  href={`mailto:${m.email}?subject=Re: ${m.subject || 'Votre message'}&body=%0A%0A--- Message original ---%0A${encodeURIComponent(m.message)}`}
+                  className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
+                >
+                  ✉️ Répondre par email
+                </a>
+              </div>
+            )}
+          </article>
+        ))}
+        {messages.length === 0 && (
+          <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucun message reçu pour l'instant.</p>
+        )}
       </div>
     </div>
   );
