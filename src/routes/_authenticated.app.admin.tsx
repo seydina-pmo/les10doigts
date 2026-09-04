@@ -423,11 +423,19 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
               <div className="border-t border-[#e2e8f0] px-5 py-4">
                 <p className="whitespace-pre-wrap text-sm text-[#1e3a5f] leading-relaxed">{m.message}</p>
                 <a
-                  href={`mailto:${m.email}?subject=Re: ${m.subject || 'Votre message'}&body=%0A%0A--- Message original ---%0A${encodeURIComponent(m.message)}`}
+                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(m.email)}&su=${encodeURIComponent('Re: ' + (m.subject || 'Votre message'))}&body=${encodeURIComponent('\n\n--- Message original ---\n' + m.message)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
                 >
-                  ✉️ Répondre par email
+                  ✉️ Répondre via Gmail
                 </a>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(m.email); alert('Email copié : ' + m.email); }}
+                  className="mt-4 ml-2 inline-flex items-center gap-2 rounded-md border border-[#e2e8f0] px-4 py-2 text-sm text-[#5a7a9a] hover:bg-[#f1f5f9]"
+                >
+                  📋 Copier l'email
+                </button>
               </div>
             )}
           </article>
