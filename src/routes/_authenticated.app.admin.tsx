@@ -643,7 +643,7 @@ function SubscriptionsTab({ subs, profiles }: { subs: Sub[]; profiles: Profile[]
 }
 
 /* ================================================== */
-/*  TAB 4 — SCHOOLS                                   */
+/*  TAB 4 — SCHOOLS (FULL WORKFLOW)                   */
 /* ================================================== */
 
 function SchoolsTab({
@@ -657,6 +657,8 @@ function SchoolsTab({
   onCloseCreds: () => void;
 }) {
   const pending = schools.filter((s) => s.status === "pending");
+  const studying = schools.filter((s) => s.status === "studying");
+  const paymentSent = schools.filter((s) => s.status === "payment_sent");
   const active = schools.filter((s) => s.status === "active");
   const rejected = schools.filter((s) => s.status === "rejected");
 
@@ -666,7 +668,7 @@ function SchoolsTab({
       {credentials && (
         <div className="rounded-xl border-2 border-[#10b981] bg-[#ecfdf5] p-5 animate-fade-in">
           <p className="font-mono text-xs uppercase tracking-wider text-[#10b981] font-bold">
-            ✓ Identifiants générés — à transmettre à l'école
+            ✓ Identifiants générés — à transmettre à l&apos;école
           </p>
           <div className="mt-3 grid gap-1 font-mono text-sm">
             <div>
@@ -678,80 +680,83 @@ function SchoolsTab({
               <strong>{credentials.password}</strong>
             </div>
           </div>
-          <button onClick={onCloseCreds} className="mt-3 text-xs text-[#5a7a9a] underline">
-            Fermer
-          </button>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`Email: ${credentials.email}\nMot de passe: ${credentials.password}`);
+                alert("Identifiants copiés !");
+              }}
+              className="rounded-md bg-[#10b981] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#059669]"
+            >
+              📋 Copier les identifiants
+            </button>
+            <button onClick={onCloseCreds} className="text-xs text-[#5a7a9a] underline">
+              Fermer
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-[#e2e8f0] bg-white p-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">En attente</p>
-          <p className="mt-2 font-serif text-3xl text-[#f59e0b]">{pending.length}</p>
-        </div>
-        <div className="rounded-xl border border-[#e2e8f0] bg-white p-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Actives</p>
-          <p className="mt-2 font-serif text-3xl text-[#10b981]">{active.length}</p>
-        </div>
-        <div className="rounded-xl border border-[#e2e8f0] bg-white p-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Refusées</p>
-          <p className="mt-2 font-serif text-3xl text-[#ef4444]">{rejected.length}</p>
-        </div>
+      {/* Workflow pipeline */}
+      <div className="grid gap-4 sm:grid-cols-5">
+        <PipelineCard label="Nouvelles" count={pending.length} color="#f59e0b" />
+        <PipelineCard label="En étude" count={studying.length} color="#4361ee" />
+        <PipelineCard label="Paiement envoyé" count={paymentSent.length} color="#8b5cf6" />
+        <PipelineCard label="Actives" count={active.length} color="#10b981" />
+        <PipelineCard label="Refusées" count={rejected.length} color="#ef4444" />
       </div>
 
-      {/* Pending schools */}
-      {pending.length > 0 && (
-        <div>
-          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-[#f59e0b] font-bold mb-3">
-            Demandes en attente
-          </h3>
-          <div className="grid gap-4">
-            {pending.map((s) => (
-              <SchoolCard key={s.id} school={s} busy={busy} onActivate={onActivate} onReject={onReject} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Pending */}
+      <SchoolSection title="Nouvelles demandes" color="#f59e0b" schools={pending} busy={busy} onActivate={onActivate} onReject={onReject} />
+      
+      {/* Studying */}
+      <SchoolSection title="En cours d'étude" color="#4361ee" schools={studying} busy={busy} onActivate={onActivate} onReject={onReject} />
+      
+      {/* Payment sent */}
+      <SchoolSection title="Paiement envoyé" color="#8b5cf6" schools={paymentSent} busy={busy} onActivate={onActivate} onReject={onReject} />
 
-      {/* Active schools */}
-      {active.length > 0 && (
-        <div>
-          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-[#10b981] font-bold mb-3">
-            Écoles actives
-          </h3>
-          <div className="grid gap-4">
-            {active.map((s) => (
-              <SchoolCard key={s.id} school={s} busy={busy} onActivate={onActivate} onReject={onReject} />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Active */}
+      <SchoolSection title="Écoles actives" color="#10b981" schools={active} busy={busy} onActivate={onActivate} onReject={onReject} />
 
       {/* Rejected */}
-      {rejected.length > 0 && (
-        <div>
-          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-[#ef4444] font-bold mb-3">
-            Demandes refusées
-          </h3>
-          <div className="grid gap-4">
-            {rejected.map((s) => (
-              <SchoolCard key={s.id} school={s} busy={busy} onActivate={onActivate} onReject={onReject} />
-            ))}
-          </div>
-        </div>
-      )}
+      <SchoolSection title="Demandes refusées" color="#ef4444" schools={rejected} busy={busy} onActivate={onActivate} onReject={onReject} />
 
       {schools.length === 0 && (
-        <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucune demande d'école pour l'instant.</p>
+        <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucune demande d&apos;école pour l&apos;instant.</p>
       )}
     </div>
   );
 }
 
-/* ================================================== */
-/*  SHARED COMPONENTS                                  */
-/* ================================================== */
+function PipelineCard({ label, count, color }: { label: string; count: number; color: string }) {
+  return (
+    <div className="rounded-xl border border-[#e2e8f0] bg-white p-4 text-center">
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">{label}</p>
+      <p className="mt-1 font-serif text-2xl" style={{ color }}>{count}</p>
+    </div>
+  );
+}
+
+function SchoolSection({ title, color, schools, busy, onActivate, onReject }: {
+  title: string; color: string; schools: School[]; busy: boolean;
+  onActivate: (id: string) => void; onReject: (id: string) => void;
+}) {
+  if (schools.length === 0) return null;
+  return (
+    <div>
+      <h3 className="font-mono text-xs uppercase tracking-[0.15em] font-bold mb-3" style={{ color }}>{title}</h3>
+      <div className="grid gap-4">
+        {schools.map((s) => (
+          <SchoolCard key={s.id} school={s} busy={busy} onActivate={onActivate} onReject={onReject} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- School Card with full workflow ---------- */
+
+const STRIPE_SCHOOL_LINK = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200"; // TODO: replace with real school payment link
 
 function SchoolCard({
   school: s, busy, onActivate, onReject,
@@ -759,6 +764,43 @@ function SchoolCard({
   school: School; busy: boolean;
   onActivate: (id: string) => void; onReject: (id: string) => void;
 }) {
+  const [updating, setUpdating] = useState(false);
+
+  async function updateStatus(newStatus: string) {
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from("schools")
+        .update({ status: newStatus })
+        .eq("id", s.id);
+      if (error) throw error;
+      window.location.reload();
+    } catch (e) {
+      alert("Erreur: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  // Gmail compose URLs for each notification
+  const gmailBase = "https://mail.google.com/mail/?view=cm&fs=1";
+  
+  const emailReceived = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Demande reçue — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
+    `Bonjour ${s.contact_name},\n\nNous avons bien reçu votre demande d'inscription pour l'école "${s.name}".\n\nNotre équipe va étudier votre dossier et vous tiendra informé de la suite.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
+  )}`;
+
+  const emailStudying = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Votre dossier est en cours d'étude — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
+    `Bonjour ${s.contact_name},\n\nVotre demande pour l'école "${s.name}" est actuellement en cours d'étude par notre équipe.\n\nNous reviendrons vers vous très prochainement.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
+  )}`;
+
+  const emailPayment = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Lien de paiement — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
+    `Bonjour ${s.contact_name},\n\nBonne nouvelle ! Votre demande pour l'école "${s.name}" a été acceptée.\n\nPour finaliser votre inscription, veuillez procéder au paiement via ce lien sécurisé :\n${STRIPE_SCHOOL_LINK}\n\nUne fois le paiement effectué, vos identifiants de connexion vous seront transmis par email.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
+  )}`;
+
+  const emailRejected = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Suite à votre demande — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
+    `Bonjour ${s.contact_name},\n\nAprès étude de votre dossier, nous ne sommes malheureusement pas en mesure de donner suite à votre demande pour l'école "${s.name}" pour le moment.\n\nN'hésitez pas à nous recontacter si vous avez des questions.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
+  )}`;
+
   return (
     <article className="rounded-xl border border-[#e2e8f0] bg-white p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -773,33 +815,115 @@ function SchoolCard({
         <Info label="Classes" v={String(s.nb_classes)} />
         <Info label="Élèves" v={String(s.nb_students)} />
         <Info label="Reçue le" v={new Date(s.created_at).toLocaleDateString("fr-FR")} />
+        {s.activated_at && <Info label="Activée le" v={new Date(s.activated_at).toLocaleDateString("fr-FR")} />}
       </dl>
       {s.message && (
         <p className="mt-3 rounded-md bg-[#f8fafc] p-3 text-sm text-[#5a7a9a] italic">
           « {s.message} »
         </p>
       )}
-      {s.status === "pending" && (
-        <div className="mt-4 flex gap-2">
+
+      {/* Stored credentials (always visible for active schools) */}
+      {s.status === "active" && (s as Record<string, unknown>).admin_credentials_email && (
+        <div className="mt-3 rounded-md border border-[#10b981]/30 bg-[#ecfdf5] p-3">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-[#10b981] font-bold mb-1">Identifiants admin école</p>
+          <div className="font-mono text-sm">
+            <span className="text-[#5a7a9a]">Email : </span>
+            <strong>{String((s as Record<string, unknown>).admin_credentials_email)}</strong>
+          </div>
+          <div className="font-mono text-sm">
+            <span className="text-[#5a7a9a]">Mot de passe : </span>
+            <strong>{String((s as Record<string, unknown>).admin_credentials_password)}</strong>
+          </div>
           <button
-            disabled={busy}
-            onClick={() => onActivate(s.id)}
-            className="rounded-md bg-[#10b981] px-4 py-2 text-sm font-medium text-white hover:bg-[#059669] disabled:opacity-60"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `Email: ${(s as Record<string, unknown>).admin_credentials_email}\nMot de passe: ${(s as Record<string, unknown>).admin_credentials_password}`
+              );
+              alert("Identifiants copiés !");
+            }}
+            className="mt-2 rounded-md bg-[#10b981] px-3 py-1 text-xs font-medium text-white hover:bg-[#059669]"
           >
-            ✓ Activer
-          </button>
-          <button
-            disabled={busy}
-            onClick={() => onReject(s.id)}
-            className="rounded-md border border-[#e2e8f0] px-4 py-2 text-sm text-[#5a7a9a] hover:bg-[#f1f5f9] disabled:opacity-60"
-          >
-            ✕ Refuser
+            📋 Copier
           </button>
         </div>
       )}
+
+      {/* WORKFLOW ACTIONS */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {/* Pending → Studying */}
+        {s.status === "pending" && (
+          <>
+            <a href={emailReceived} target="_blank" rel="noopener noreferrer"
+              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+              ✉️ Notifier réception
+            </a>
+            <button disabled={updating || busy} onClick={() => updateStatus("studying")}
+              className="rounded-md bg-[#4361ee] px-4 py-2 text-xs font-medium text-white hover:bg-[#3451d1] disabled:opacity-60">
+              📋 Passer en étude
+            </button>
+            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) onReject(s.id); }}
+              className="rounded-md border border-[#ef4444]/30 px-3 py-2 text-xs text-[#ef4444] hover:bg-[#fef2f2] disabled:opacity-60">
+              ✕ Refuser
+            </button>
+          </>
+        )}
+
+        {/* Studying → Payment sent */}
+        {s.status === "studying" && (
+          <>
+            <a href={emailStudying} target="_blank" rel="noopener noreferrer"
+              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+              ✉️ Notifier l&apos;étude
+            </a>
+            <a href={emailPayment} target="_blank" rel="noopener noreferrer" onClick={() => updateStatus("payment_sent")}
+              className="rounded-md bg-[#8b5cf6] px-4 py-2 text-xs font-medium text-white hover:bg-[#7c3aed]">
+              💳 Envoyer lien de paiement
+            </a>
+            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) onReject(s.id); }}
+              className="rounded-md border border-[#ef4444]/30 px-3 py-2 text-xs text-[#ef4444] hover:bg-[#fef2f2] disabled:opacity-60">
+              ✕ Refuser
+            </button>
+          </>
+        )}
+
+        {/* Payment sent → Activate */}
+        {s.status === "payment_sent" && (
+          <>
+            <button disabled={updating || busy} onClick={() => onActivate(s.id)}
+              className="rounded-md bg-[#10b981] px-4 py-2 text-xs font-medium text-white hover:bg-[#059669] disabled:opacity-60">
+              ✓ Paiement reçu → Activer
+            </button>
+            <a href={emailPayment} target="_blank" rel="noopener noreferrer"
+              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+              ✉️ Renvoyer lien paiement
+            </a>
+          </>
+        )}
+
+        {/* Rejected → email */}
+        {s.status === "rejected" && (
+          <a href={emailRejected} target="_blank" rel="noopener noreferrer"
+            className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+            ✉️ Notifier le refus
+          </a>
+        )}
+
+        {/* Active → Contact email */}
+        {s.status === "active" && (
+          <a href={`${gmailBase}&to=${encodeURIComponent(s.contact_email)}`} target="_blank" rel="noopener noreferrer"
+            className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+            ✉️ Contacter l&apos;école
+          </a>
+        )}
+      </div>
     </article>
   );
 }
+
+/* ================================================== */
+/*  SHARED COMPONENTS                                  */
+/* ================================================== */
 
 function Info({ label, v }: { label: string; v: string }) {
   return (
@@ -841,11 +965,15 @@ function SubBadge({ status }: { status: string }) {
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     pending: "bg-[#fef3c7] text-[#d97706]",
+    studying: "bg-[#dbeafe] text-[#4361ee]",
+    payment_sent: "bg-[#ede9fe] text-[#8b5cf6]",
     active: "bg-[#dcfce7] text-[#16a34a]",
     rejected: "bg-[#fee2e2] text-[#dc2626]",
   };
   const label: Record<string, string> = {
-    pending: "en attente",
+    pending: "nouvelle",
+    studying: "en étude",
+    payment_sent: "paiement envoyé",
     active: "activée",
     rejected: "refusée",
   };
@@ -855,3 +983,4 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
+

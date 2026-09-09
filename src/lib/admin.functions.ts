@@ -139,13 +139,15 @@ export const activateSchool = createServerFn({ method: "POST" })
         school_id: school.id,
       });
 
-    // Activer l'école
+    // Activer l'école + stocker les identifiants
     const { error: uErr } = await supabaseAdmin
       .from("schools")
       .update({
         status: "active",
         admin_user_id: userId,
         activated_at: new Date().toISOString(),
+        admin_credentials_email: school.contact_email,
+        admin_credentials_password: tempPassword,
       })
       .eq("id", school.id);
     if (uErr) throw new Error(uErr.message);
