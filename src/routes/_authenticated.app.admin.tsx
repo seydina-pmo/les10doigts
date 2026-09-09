@@ -8,6 +8,7 @@ import {
   activateSchool,
   rejectSchool,
 } from "@/lib/admin.functions";
+import { replyToMessage, notifySchool } from "@/lib/email.functions";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   head: () => ({ meta: [{ title: "Admin — La Méthode des 10 Doigts" }] }),
@@ -390,6 +391,27 @@ function OverviewTab({
 
 function MessagesTab({ messages }: { messages: ContactMsg[] }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState<Set<string>>(new Set());
+  const reply = useServerFn(replyToMessage);
+
+  async function handleSend(m: ContactMsg) {
+    if (!replyText.trim()) return;
+    setSending(true);
+    try {
+      await reply({ data: { to: m.email, subject: "Re: " + (m.subject || "Votre message"), body: replyText, originalMessage: m.message } });
+      setSent((prev) => new Set(prev).add(m.id));
+      setReplyTo(null);
+      setReplyText("");
+      alert("✅ Email envoyé depuis contact@les10doigts.com !");
+    } catch (e) {
+      alert("❌ Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div>
@@ -412,6 +434,7 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
                 <div className="flex items-center gap-3">
                   <p className="font-medium text-[#1e3a5f] truncate">{m.name}</p>
                   <span className="text-xs text-[#5a7a9a]">{m.email}</span>
+                  {sent.has(m.id) && <span className="text-xs text-[#10b981] font-medium">✓ Répondu</span>}
                 </div>
                 {m.subject && <p className="mt-1 text-sm text-[#5a7a9a] truncate">{m.subject}</p>}
               </div>
@@ -422,20 +445,39 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
             {expanded === m.id && (
               <div className="border-t border-[#e2e8f0] px-5 py-4">
                 <p className="whitespace-pre-wrap text-sm text-[#1e3a5f] leading-relaxed">{m.message}</p>
-                <a
-                  href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(m.email)}&su=${encodeURIComponent('Re: ' + (m.subject || 'Votre message'))}&body=${encodeURIComponent('\n\n--- Message original ---\n' + m.message)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
-                >
-                  ✉️ Répondre via Gmail
-                </a>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(m.email); alert('Email copié : ' + m.email); }}
-                  className="mt-4 ml-2 inline-flex items-center gap-2 rounded-md border border-[#e2e8f0] px-4 py-2 text-sm text-[#5a7a9a] hover:bg-[#f1f5f9]"
-                >
-                  📋 Copier l'email
-                </button>
+                {replyTo === m.id ? (
+                  <div className="mt-4 space-y-3">
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Votre réponse..."
+                      rows={4}
+                      className="w-full rounded-md border border-[#e2e8f0] p-3 text-sm focus:border-[#4361ee] focus:outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        disabled={sending || !replyText.trim()}
+                        onClick={() => handleSend(m)}
+                        className="rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1] disabled:opacity-60"
+                      >
+                        {sending ? "Envoi..." : "✉️ Envoyer depuis contact@les10doigts.com"}
+                      </button>
+                      <button
+                        onClick={() => { setReplyTo(null); setReplyText(""); }}
+                        className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setReplyTo(m.id)}
+                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
+                  >
+                    ✉️ Répondre
+                  </button>
+                )}
               </div>
             )}
           </article>
@@ -765,6 +807,8 @@ function SchoolCard({
   onActivate: (id: string) => void; onReject: (id: string) => void;
 }) {
   const [updating, setUpdating] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<string | null>(null);
+  const notify = useServerFn(notifySchool);
 
   async function updateStatus(newStatus: string) {
     setUpdating(true);
@@ -782,24 +826,16 @@ function SchoolCard({
     }
   }
 
-  // Gmail compose URLs for each notification
-  const gmailBase = "https://mail.google.com/mail/?view=cm&fs=1";
-  
-  const emailReceived = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Demande reçue — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
-    `Bonjour ${s.contact_name},\n\nNous avons bien reçu votre demande d'inscription pour l'école "${s.name}".\n\nNotre équipe va étudier votre dossier et vous tiendra informé de la suite.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
-  )}`;
-
-  const emailStudying = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Votre dossier est en cours d'étude — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
-    `Bonjour ${s.contact_name},\n\nVotre demande pour l'école "${s.name}" est actuellement en cours d'étude par notre équipe.\n\nNous reviendrons vers vous très prochainement.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
-  )}`;
-
-  const emailPayment = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Lien de paiement — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
-    `Bonjour ${s.contact_name},\n\nBonne nouvelle ! Votre demande pour l'école "${s.name}" a été acceptée.\n\nPour finaliser votre inscription, veuillez procéder au paiement via ce lien sécurisé :\n${STRIPE_SCHOOL_LINK}\n\nUne fois le paiement effectué, vos identifiants de connexion vous seront transmis par email.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
-  )}`;
-
-  const emailRejected = `${gmailBase}&to=${encodeURIComponent(s.contact_email)}&su=${encodeURIComponent("Suite à votre demande — La Méthode des 10 Doigts")}&body=${encodeURIComponent(
-    `Bonjour ${s.contact_name},\n\nAprès étude de votre dossier, nous ne sommes malheureusement pas en mesure de donner suite à votre demande pour l'école "${s.name}" pour le moment.\n\nN'hésitez pas à nous recontacter si vous avez des questions.\n\nCordialement,\nL'équipe La Méthode des 10 Doigts`
-  )}`;
+  async function sendNotification(type: "received" | "studying" | "payment" | "rejected") {
+    setEmailStatus("envoi...");
+    try {
+      await notify({ data: { to: s.contact_email, schoolName: s.name, contactName: s.contact_name, type, paymentLink: STRIPE_SCHOOL_LINK } });
+      setEmailStatus("✅ Email envoyé !");
+      setTimeout(() => setEmailStatus(null), 3000);
+    } catch (e) {
+      setEmailStatus("❌ " + (e instanceof Error ? e.message : String(e)));
+    }
+  }
 
   return (
     <article className="rounded-xl border border-[#e2e8f0] bg-white p-5">
@@ -849,22 +885,26 @@ function SchoolCard({
         </div>
       )}
 
+      {emailStatus && (
+        <p className="mt-3 text-xs font-medium text-[#4361ee]">{emailStatus}</p>
+      )}
+
       {/* WORKFLOW ACTIONS */}
       <div className="mt-4 flex flex-wrap gap-2">
         {/* Pending → Studying */}
         {s.status === "pending" && (
           <>
-            <a href={emailReceived} target="_blank" rel="noopener noreferrer"
-              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+            <button disabled={updating || busy} onClick={() => sendNotification("received")}
+              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] disabled:opacity-60">
               ✉️ Notifier réception
-            </a>
-            <button disabled={updating || busy} onClick={() => updateStatus("studying")}
-              className="rounded-md bg-[#4361ee] px-4 py-2 text-xs font-medium text-white hover:bg-[#3451d1] disabled:opacity-60">
-              📋 Passer en étude
             </button>
-            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) onReject(s.id); }}
+            <button disabled={updating || busy} onClick={() => { sendNotification("studying"); updateStatus("studying"); }}
+              className="rounded-md bg-[#4361ee] px-4 py-2 text-xs font-medium text-white hover:bg-[#3451d1] disabled:opacity-60">
+              📋 Passer en étude + notifier
+            </button>
+            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) { sendNotification("rejected"); onReject(s.id); } }}
               className="rounded-md border border-[#ef4444]/30 px-3 py-2 text-xs text-[#ef4444] hover:bg-[#fef2f2] disabled:opacity-60">
-              ✕ Refuser
+              ✕ Refuser + notifier
             </button>
           </>
         )}
@@ -872,17 +912,13 @@ function SchoolCard({
         {/* Studying → Payment sent */}
         {s.status === "studying" && (
           <>
-            <a href={emailStudying} target="_blank" rel="noopener noreferrer"
-              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
-              ✉️ Notifier l&apos;étude
-            </a>
-            <a href={emailPayment} target="_blank" rel="noopener noreferrer" onClick={() => updateStatus("payment_sent")}
-              className="rounded-md bg-[#8b5cf6] px-4 py-2 text-xs font-medium text-white hover:bg-[#7c3aed]">
+            <button disabled={updating || busy} onClick={() => { sendNotification("payment"); updateStatus("payment_sent"); }}
+              className="rounded-md bg-[#8b5cf6] px-4 py-2 text-xs font-medium text-white hover:bg-[#7c3aed] disabled:opacity-60">
               💳 Envoyer lien de paiement
-            </a>
-            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) onReject(s.id); }}
+            </button>
+            <button disabled={updating || busy} onClick={() => { if (confirm("Refuser ?")) { sendNotification("rejected"); onReject(s.id); } }}
               className="rounded-md border border-[#ef4444]/30 px-3 py-2 text-xs text-[#ef4444] hover:bg-[#fef2f2] disabled:opacity-60">
-              ✕ Refuser
+              ✕ Refuser + notifier
             </button>
           </>
         )}
@@ -894,28 +930,22 @@ function SchoolCard({
               className="rounded-md bg-[#10b981] px-4 py-2 text-xs font-medium text-white hover:bg-[#059669] disabled:opacity-60">
               ✓ Paiement reçu → Activer
             </button>
-            <a href={emailPayment} target="_blank" rel="noopener noreferrer"
-              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
+            <button disabled={updating || busy} onClick={() => sendNotification("payment")}
+              className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] disabled:opacity-60">
               ✉️ Renvoyer lien paiement
-            </a>
+            </button>
           </>
         )}
 
         {/* Rejected → email */}
         {s.status === "rejected" && (
-          <a href={emailRejected} target="_blank" rel="noopener noreferrer"
-            className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
-            ✉️ Notifier le refus
-          </a>
+          <button disabled={updating || busy} onClick={() => sendNotification("rejected")}
+            className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] disabled:opacity-60">
+            ✉️ Renvoyer notification refus
+          </button>
         )}
 
-        {/* Active → Contact email */}
-        {s.status === "active" && (
-          <a href={`${gmailBase}&to=${encodeURIComponent(s.contact_email)}`} target="_blank" rel="noopener noreferrer"
-            className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]">
-            ✉️ Contacter l&apos;école
-          </a>
-        )}
+        {/* Active → no email action needed */}
       </div>
     </article>
   );
