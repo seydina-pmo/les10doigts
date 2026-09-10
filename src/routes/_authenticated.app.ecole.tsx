@@ -7,6 +7,7 @@ import {
   createSchoolClass,
   deleteSchoolClass,
   createStudents,
+  importStudentsCSV,
   requestSchoolUpgrade,
 } from "@/lib/admin.functions";
 
@@ -255,13 +256,16 @@ function ClassesTab({ data, reload }: { data: Data; reload: () => void }) {
 
 function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => void }) {
   const create = useServerFn(createStudents);
+  const csvImport = useServerFn(importStudentsCSV);
+  const [mode, setMode] = useState<"auto" | "csv">("auto");
   const [count, setCount] = useState(10);
   const [prefix, setPrefix] = useState("eleve");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [result, setResult] = useState<
-    { username: string; email: string; password: string }[] | null
+    { name?: string; username: string; email: string; password: string }[] | null
   >(null);
+  const [csvPreview, setCsvPreview] = useState<{ name: string }[]>([]);
 
   async function onGo() {
     setBusy(true);
@@ -276,12 +280,59 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
     }
   }
 
+  function handleCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      // Skip header if it looks like one
+      const start = /^(nom|name|prénom|prenom|eleve|étudiant)/i.test(lines[0] ?? "") ? 1 : 0;
+      const students = lines.slice(start).map((line) => {
+        // Support CSV with columns: take first column or whole line
+        const parts = line.split(/[;,\t]/);
+        return { name: parts[0].trim() };
+      }).filter((s) => s.name.length > 0);
+      setCsvPreview(students);
+      setErr(null);
+    };
+    reader.readAsText(file);
+  }
+
+  async function onImportCSV() {
+    if (!csvPreview.length) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await csvImport({ data: { classId: klass.id, students: csvPreview } });
+      setResult(r.students);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function copyAll() {
     if (!result) return;
     const txt = result
-      .map((s) => `${s.username}\t${s.password}`)
+      .map((s) => `${s.name || s.username}\t${s.username}\t${s.password}`)
       .join("\n");
     navigator.clipboard.writeText(txt);
+  }
+
+  function downloadCSV() {
+    if (!result) return;
+    const header = "Nom,Identifiant,Mot de passe\n";
+    const rows = result.map((s) => `${s.name || ""},${s.username},${s.password}`).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `eleves-${klass.name}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -300,40 +351,101 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
         </div>
 
         {!result && (
-          <div className="mt-5 grid gap-4">
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-ink-soft">Préfixe des identifiants</span>
-              <input
-                value={prefix}
-                onChange={(e) => setPrefix(e.target.value)}
-                className="rounded-md border border-rule bg-card px-3 py-2 font-mono"
-              />
-            </label>
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-ink-soft">Combien d&apos;élèves ? (max 60)</span>
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={count}
-                onChange={(e) => setCount(Number(e.target.value) || 1)}
-                className="rounded-md border border-rule bg-card px-3 py-2"
-              />
-            </label>
-            <p className="text-xs text-ink-soft">
-              Les élèves se connectent avec leur <strong>identifiant</strong>{" "}
-              (pas d&apos;email personnel) et le mot de passe imprimé ci-dessous.
-              Les identifiants ne sont plus affichés une fois cette fenêtre fermée.
-            </p>
-            {err && <p className="text-sm text-destructive">{err}</p>}
-            <button
-              disabled={busy}
-              onClick={onGo}
-              className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-paper hover:bg-copper-deep disabled:opacity-60"
-            >
-              {busy ? "Création…" : `Créer ${count} compte${count > 1 ? "s" : ""}`}
-            </button>
-          </div>
+          <>
+            {/* Mode tabs */}
+            <div className="mt-4 flex gap-1 rounded-md bg-paper-deep p-1">
+              <button
+                onClick={() => setMode("auto")}
+                className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition ${mode === "auto" ? "bg-copper text-white" : "text-ink-soft hover:text-ink"}`}
+              >
+                Génération auto
+              </button>
+              <button
+                onClick={() => setMode("csv")}
+                className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition ${mode === "csv" ? "bg-copper text-white" : "text-ink-soft hover:text-ink"}`}
+              >
+                📄 Import CSV / liste
+              </button>
+            </div>
+
+            {mode === "auto" && (
+              <div className="mt-5 grid gap-4">
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-ink-soft">Préfixe des identifiants</span>
+                  <input
+                    value={prefix}
+                    onChange={(e) => setPrefix(e.target.value)}
+                    className="rounded-md border border-rule bg-card px-3 py-2 font-mono"
+                  />
+                </label>
+                <label className="grid gap-1.5 text-sm">
+                  <span className="text-ink-soft">Combien d&apos;élèves ? (max 60)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value) || 1)}
+                    className="rounded-md border border-rule bg-card px-3 py-2"
+                  />
+                </label>
+                <p className="text-xs text-ink-soft">
+                  Les élèves se connectent avec leur <strong>identifiant</strong>{" "}
+                  (pas d&apos;email personnel) et le mot de passe généré.
+                </p>
+                {err && <p className="text-sm text-destructive">{err}</p>}
+                <button
+                  disabled={busy}
+                  onClick={onGo}
+                  className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-paper hover:bg-copper-deep disabled:opacity-60"
+                >
+                  {busy ? "Création…" : `Créer ${count} compte${count > 1 ? "s" : ""}`}
+                </button>
+              </div>
+            )}
+
+            {mode === "csv" && (
+              <div className="mt-5 grid gap-4">
+                <div className="rounded-md border border-dashed border-rule bg-paper-deep p-4 text-center">
+                  <p className="text-sm text-ink-soft mb-2">
+                    Importez un fichier <strong>.csv</strong> ou <strong>.txt</strong> avec un nom par ligne
+                  </p>
+                  <p className="text-xs text-ink-soft mb-3">
+                    Format : une colonne « Nom » (ou Prénom Nom). Ex :<br />
+                    <code className="font-mono text-[11px]">Amadou Diallo<br />Fatou Sall<br />Moussa Ba</code>
+                  </p>
+                  <input
+                    type="file"
+                    accept=".csv,.txt,.xlsx"
+                    onChange={handleCSV}
+                    className="mx-auto text-sm"
+                  />
+                </div>
+                {csvPreview.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-ink">
+                      {csvPreview.length} élève{csvPreview.length > 1 ? "s" : ""} détecté{csvPreview.length > 1 ? "s" : ""}
+                    </p>
+                    <div className="mt-2 max-h-40 overflow-auto rounded-md border border-rule text-xs">
+                      {csvPreview.map((s, i) => (
+                        <div key={i} className="border-b border-rule px-3 py-1.5 last:border-0">
+                          {i + 1}. {s.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {err && <p className="text-sm text-destructive">{err}</p>}
+                <button
+                  disabled={busy || csvPreview.length === 0}
+                  onClick={onImportCSV}
+                  className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-paper hover:bg-copper-deep disabled:opacity-60"
+                >
+                  {busy ? "Création…" : `Importer ${csvPreview.length} élève${csvPreview.length > 1 ? "s" : ""}`}
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {result && (
@@ -348,13 +460,19 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
                   onClick={copyAll}
                   className="rounded-md border border-rule px-3 py-1.5 text-xs hover:bg-paper-deep"
                 >
-                  Copier
+                  📋 Copier
+                </button>
+                <button
+                  onClick={downloadCSV}
+                  className="rounded-md border border-rule px-3 py-1.5 text-xs hover:bg-paper-deep"
+                >
+                  ⬇ Télécharger CSV
                 </button>
                 <button
                   onClick={() => window.print()}
                   className="rounded-md border border-rule px-3 py-1.5 text-xs hover:bg-paper-deep"
                 >
-                  Imprimer
+                  🖨 Imprimer
                 </button>
               </div>
             </div>
@@ -362,6 +480,7 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
               <table className="w-full text-sm">
                 <thead className="bg-paper-deep text-left text-xs uppercase tracking-wider text-ink-soft">
                   <tr>
+                    <th className="px-3 py-2">Nom</th>
                     <th className="px-3 py-2">Identifiant</th>
                     <th className="px-3 py-2">Mot de passe</th>
                   </tr>
@@ -369,6 +488,7 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
                 <tbody className="font-mono">
                   {result.map((s) => (
                     <tr key={s.username} className="border-t border-rule">
+                      <td className="px-3 py-2 font-sans">{s.name || "—"}</td>
                       <td className="px-3 py-2">{s.username}</td>
                       <td className="px-3 py-2">{s.password}</td>
                     </tr>
@@ -376,11 +496,14 @@ function StudentDialog({ klass, onClose }: { klass: ClassRow; onClose: () => voi
                 </tbody>
               </table>
             </div>
+            <p className="text-xs text-destructive font-medium">
+              ⚠ Sauvegardez ces identifiants maintenant ! Ils ne seront plus affichés après fermeture.
+            </p>
             <button
               onClick={onClose}
               className="rounded-md bg-copper px-4 py-2.5 text-sm font-medium text-white hover:bg-copper-deep"
             >
-              J&apos;ai imprimé, fermer
+              J&apos;ai sauvegardé, fermer
             </button>
           </div>
         )}

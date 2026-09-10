@@ -427,3 +427,68 @@ export const requestSchoolUpgrade = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// ---------- Import CSV (liste de noms) ----------
+
+export const importStudentsCSV = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: { classId: string; students: { name: string }[] }) => d,
+  )
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context, data }) => {
+    const { school, supabaseAdmin } = await requireMySchool(
+      context.supabase,
+      context.userId,
+    );
+    if (!data.students.length) throw new Error("Aucun élève dans le fichier");
+    if (data.students.length > 100) throw new Error("Maximum 100 élèves par import");
+
+    const { data: klass, error: kErr } = await supabaseAdmin
+      .from("classes")
+      .select("id, name, school_id")
+      .eq("id", data.classId)
+      .eq("school_id", school.id)
+      .maybeSingle();
+    if (kErr) throw new Error(kErr.message);
+    if (!klass) throw new Error("Classe introuvable");
+
+    const schoolSlug = slug(school.name) || school.id.slice(0, 8);
+    const stamp = Date.now().toString(36).slice(-4);
+    const created: { name: string; username: string; email: string; password: string }[] = [];
+
+    for (let i = 0; i < data.students.length; i++) {
+      const studentName = data.students[i].name.trim();
+      if (!studentName) continue;
+      const nameSlug = slug(studentName) || `eleve-${i + 1}`;
+      const username = `${nameSlug}-${stamp}`;
+      const email = `${username}@${schoolSlug}.eleve.local`;
+      const password = generatePassword(10);
+      const { data: u, error: uErr } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          display_name: studentName,
+          role: "eleve",
+          school_id: school.id,
+          class_id: klass.id,
+        },
+      });
+      if (uErr) throw new Error(`${studentName}: ${uErr.message}`);
+      const uid = u?.user?.id;
+      if (!uid) throw new Error("Création impossible");
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+      await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: uid, role: "eleve" });
+      await supabaseAdmin.from("profiles").upsert({
+        id: uid,
+        display_name: studentName,
+        school_id: school.id,
+      });
+      await supabaseAdmin
+        .from("class_members")
+        .insert({ class_id: klass.id, user_id: uid });
+      created.push({ name: studentName, username, email, password });
+    }
+    return { ok: true as const, students: created };
+  });
