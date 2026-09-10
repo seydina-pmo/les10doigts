@@ -419,7 +419,7 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
     }
   }
 
-  function MessageCard({ m }: { m: ContactMsg }) {
+  function renderCard(m: ContactMsg) {
     return (
       <article
         key={m.id}
@@ -454,6 +454,7 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
               replyTo === m.id ? (
                 <div className="mt-4 space-y-3">
                   <textarea
+                    autoFocus
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Votre réponse..."
@@ -510,7 +511,7 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
             📨 Messages non répondus ({unreplied.length})
           </h3>
           <div className="space-y-3">
-            {unreplied.map((m) => <MessageCard key={m.id} m={m} />)}
+            {unreplied.map((m) => renderCard(m))}
           </div>
         </div>
       )}
@@ -521,7 +522,7 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
             ✅ Messages répondus ({replied.length})
           </h3>
           <div className="space-y-3">
-            {replied.map((m) => <MessageCard key={m.id} m={m} />)}
+            {replied.map((m) => renderCard(m))}
           </div>
         </div>
       )}

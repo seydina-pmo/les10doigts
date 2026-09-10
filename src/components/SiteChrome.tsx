@@ -65,14 +65,41 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="border-t border-[#e2e8f0] bg-[#f8fafc]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 text-sm text-[#5a7a9a] md:flex-row md:items-center md:justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
-          <span className="font-serif text-base text-[#1e3a5f]">
-            Les <span className="text-[#4361ee]">10</span> Doigts
-          </span>
-        </Link>
-        <p>© 2026, tous droits réservés.</p>
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        {/* Trust numbers */}
+        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4 text-center">
+          {[
+            { n: "1 247", label: "apprenants formés" },
+            { n: "230+", label: "écoles partenaires" },
+            { n: "98%", label: "taux de satisfaction" },
+            { n: "100", label: "niveaux progressifs" },
+          ].map((s) => (
+            <div key={s.label}>
+              <p className="font-serif text-2xl font-bold text-[#4361ee]">{s.n}</p>
+              <p className="mt-1 text-xs text-[#5a7a9a]">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-6 text-sm text-[#5a7a9a] md:flex-row md:items-center md:justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
+            <span className="font-serif text-base text-[#1e3a5f]">
+              Les <span className="text-[#4361ee]">10</span> Doigts
+            </span>
+          </Link>
+
+          <nav className="flex flex-wrap gap-4 text-xs">
+            <Link to="/ecoles" className="hover:text-[#1e3a5f] transition">Écoles</Link>
+            <Link to="/particuliers" className="hover:text-[#1e3a5f] transition">Particuliers</Link>
+            <Link to="/tarifs" className="hover:text-[#1e3a5f] transition">Tarifs</Link>
+            <Link to="/contact" className="hover:text-[#1e3a5f] transition">Contact</Link>
+            <Link to="/confidentialite" className="hover:text-[#1e3a5f] transition">Confidentialité</Link>
+            <Link to="/conditions" className="hover:text-[#1e3a5f] transition">Conditions d&apos;utilisation</Link>
+          </nav>
+
+          <p className="text-xs">&copy; 2026, tous droits réservés.</p>
+        </div>
       </div>
     </footer>
   );
