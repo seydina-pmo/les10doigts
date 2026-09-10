@@ -20,6 +20,7 @@ export const sendEmail = createServerFn({ method: "POST" })
     const resend = await getResend();
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: "contact@les10doigts.com",
       to: data.to,
       subject: data.subject,
       text: data.body,
@@ -38,6 +39,7 @@ export const replyToMessage = createServerFn({ method: "POST" })
     const fullBody = `${data.body}\n\n--- Message original ---\n${data.originalMessage}`;
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: "contact@les10doigts.com",
       to: data.to,
       subject: data.subject,
       text: fullBody,
@@ -82,6 +84,7 @@ export const notifySchool = createServerFn({ method: "POST" })
 
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: "contact@les10doigts.com",
       to: data.to,
       subject: tmpl.subject,
       text: tmpl.body,

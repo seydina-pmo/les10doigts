@@ -70,6 +70,8 @@ type ContactMsg = {
   email: string;
   subject: string | null;
   message: string;
+  replied_at: string | null;
+  reply_text: string | null;
   created_at: string;
 };
 
@@ -394,18 +396,22 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState<Set<string>>(new Set());
   const reply = useServerFn(replyToMessage);
+
+  const unreplied = messages.filter((m) => !m.replied_at);
+  const replied = messages.filter((m) => !!m.replied_at);
 
   async function handleSend(m: ContactMsg) {
     if (!replyText.trim()) return;
     setSending(true);
     try {
       await reply({ data: { to: m.email, subject: "Re: " + (m.subject || "Votre message"), body: replyText, originalMessage: m.message } });
-      setSent((prev) => new Set(prev).add(m.id));
+      // Mark as replied in DB
+      await supabase.from("contact_messages").update({ replied_at: new Date().toISOString(), reply_text: replyText }).eq("id", m.id);
       setReplyTo(null);
       setReplyText("");
       alert("✅ Email envoyé depuis contact@les10doigts.com !");
+      window.location.reload();
     } catch (e) {
       alert("❌ Erreur : " + (e instanceof Error ? e.message : String(e)));
     } finally {
@@ -413,79 +419,116 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
     }
   }
 
-  return (
-    <div>
-      <div className="mb-4 rounded-xl border border-[#e2e8f0] bg-white p-5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Total messages</p>
-        <p className="mt-2 font-serif text-3xl text-[#06b6d4]">{messages.length}</p>
-      </div>
-
-      <div className="space-y-3">
-        {messages.map((m) => (
-          <article
-            key={m.id}
-            className={"rounded-xl border bg-white transition-shadow " + (expanded === m.id ? "border-[#4361ee] shadow-md" : "border-[#e2e8f0]")}
-          >
-            <button
-              onClick={() => setExpanded(expanded === m.id ? null : m.id)}
-              className="flex w-full items-center justify-between p-5 text-left"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3">
-                  <p className="font-medium text-[#1e3a5f] truncate">{m.name}</p>
-                  <span className="text-xs text-[#5a7a9a]">{m.email}</span>
-                  {sent.has(m.id) && <span className="text-xs text-[#10b981] font-medium">✓ Répondu</span>}
-                </div>
-                {m.subject && <p className="mt-1 text-sm text-[#5a7a9a] truncate">{m.subject}</p>}
-              </div>
-              <span className="ml-4 shrink-0 text-xs text-[#5a7a9a]">
-                {new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-              </span>
-            </button>
-            {expanded === m.id && (
-              <div className="border-t border-[#e2e8f0] px-5 py-4">
-                <p className="whitespace-pre-wrap text-sm text-[#1e3a5f] leading-relaxed">{m.message}</p>
-                {replyTo === m.id ? (
-                  <div className="mt-4 space-y-3">
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Votre réponse..."
-                      rows={4}
-                      className="w-full rounded-md border border-[#e2e8f0] p-3 text-sm focus:border-[#4361ee] focus:outline-none"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        disabled={sending || !replyText.trim()}
-                        onClick={() => handleSend(m)}
-                        className="rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1] disabled:opacity-60"
-                      >
-                        {sending ? "Envoi..." : "✉️ Envoyer depuis contact@les10doigts.com"}
-                      </button>
-                      <button
-                        onClick={() => { setReplyTo(null); setReplyText(""); }}
-                        className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setReplyTo(m.id)}
-                    className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
-                  >
-                    ✉️ Répondre
-                  </button>
-                )}
+  function MessageCard({ m }: { m: ContactMsg }) {
+    return (
+      <article
+        key={m.id}
+        className={"rounded-xl border bg-white transition-shadow " + (expanded === m.id ? "border-[#4361ee] shadow-md" : "border-[#e2e8f0]")}
+      >
+        <button
+          onClick={() => setExpanded(expanded === m.id ? null : m.id)}
+          className="flex w-full items-center justify-between p-5 text-left"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <p className="font-medium text-[#1e3a5f] truncate">{m.name}</p>
+              <span className="text-xs text-[#5a7a9a]">{m.email}</span>
+              {m.replied_at && <span className="rounded-full bg-[#dcfce7] px-2 py-0.5 text-[10px] font-mono uppercase text-[#16a34a]">✓ répondu</span>}
+            </div>
+            {m.subject && <p className="mt-1 text-sm text-[#5a7a9a] truncate">{m.subject}</p>}
+          </div>
+          <span className="ml-4 shrink-0 text-xs text-[#5a7a9a]">
+            {new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+          </span>
+        </button>
+        {expanded === m.id && (
+          <div className="border-t border-[#e2e8f0] px-5 py-4">
+            <p className="whitespace-pre-wrap text-sm text-[#1e3a5f] leading-relaxed">{m.message}</p>
+            {m.reply_text && (
+              <div className="mt-3 rounded-md border border-[#10b981]/30 bg-[#ecfdf5] p-3">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-[#10b981] font-bold mb-1">Votre réponse ({new Date(m.replied_at!).toLocaleDateString("fr-FR")})</p>
+                <p className="whitespace-pre-wrap text-sm text-[#1e3a5f]">{m.reply_text}</p>
               </div>
             )}
-          </article>
-        ))}
-        {messages.length === 0 && (
-          <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucun message reçu pour l'instant.</p>
+            {!m.replied_at && (
+              replyTo === m.id ? (
+                <div className="mt-4 space-y-3">
+                  <textarea
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Votre réponse..."
+                    rows={4}
+                    className="w-full rounded-md border border-[#e2e8f0] p-3 text-sm focus:border-[#4361ee] focus:outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      disabled={sending || !replyText.trim()}
+                      onClick={() => handleSend(m)}
+                      className="rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1] disabled:opacity-60"
+                    >
+                      {sending ? "Envoi..." : "✉️ Envoyer depuis contact@les10doigts.com"}
+                    </button>
+                    <button
+                      onClick={() => { setReplyTo(null); setReplyText(""); }}
+                      className="rounded-md border border-[#e2e8f0] px-3 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9]"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setReplyTo(m.id)}
+                  className="mt-4 inline-flex items-center gap-2 rounded-md bg-[#4361ee] px-4 py-2 text-sm font-medium text-white hover:bg-[#3451d1]"
+                >
+                  ✉️ Répondre
+                </button>
+              )
+            )}
+          </div>
         )}
+      </article>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-[#e2e8f0] bg-white p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Non lus</p>
+          <p className="mt-2 font-serif text-3xl text-[#ef4444]">{unreplied.length}</p>
+        </div>
+        <div className="rounded-xl border border-[#e2e8f0] bg-white p-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-[#5a7a9a]">Répondus</p>
+          <p className="mt-2 font-serif text-3xl text-[#10b981]">{replied.length}</p>
+        </div>
       </div>
+
+      {unreplied.length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-[#ef4444] font-bold mb-3">
+            📨 Messages non répondus ({unreplied.length})
+          </h3>
+          <div className="space-y-3">
+            {unreplied.map((m) => <MessageCard key={m.id} m={m} />)}
+          </div>
+        </div>
+      )}
+
+      {replied.length > 0 && (
+        <div>
+          <h3 className="font-mono text-xs uppercase tracking-[0.15em] text-[#10b981] font-bold mb-3">
+            ✅ Messages répondus ({replied.length})
+          </h3>
+          <div className="space-y-3">
+            {replied.map((m) => <MessageCard key={m.id} m={m} />)}
+          </div>
+        </div>
+      )}
+
+      {messages.length === 0 && (
+        <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucun message reçu pour l'instant.</p>
+      )}
     </div>
   );
 }
