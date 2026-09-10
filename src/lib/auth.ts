@@ -24,10 +24,13 @@ export function useSession() {
 }
 
 export async function fetchRole(userId: string): Promise<AppRole | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .maybeSingle();
+  if (error) {
+    console.error("[fetchRole] RLS/query error:", error.message);
+  }
   return (data?.role as AppRole) ?? null;
 }
