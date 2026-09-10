@@ -145,7 +145,7 @@ function VideoSection() {
 
         <div className="mx-auto mt-10 aspect-video max-w-3xl overflow-hidden rounded-2xl border border-[#e2e8f0] shadow-[0_25px_60px_-15px_rgba(30,58,95,0.15)]">
           <iframe
-            src="https://www.youtube.com/embed/2zX_D3feycI?rel=0&modestbranding=1"
+            src="https://www.youtube.com/embed/sfyo8gR2KtE?rel=0&modestbranding=1"
             title="Présentation de la Méthode des 10 Doigts"
             className="h-full w-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
