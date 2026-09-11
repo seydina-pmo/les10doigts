@@ -40,6 +40,7 @@ type Profile = {
   display_name: string | null;
   email: string | null;
   created_at: string;
+  disabled_at: string | null;
 };
 
 type Sub = {
@@ -119,7 +120,7 @@ function AdminPage() {
 
         // Load all data in parallel
         const [pRes, rRes, sRes, aRes, mRes] = await Promise.all([
-          supabase.from("profiles").select("id, display_name, email, created_at").order("created_at", { ascending: false }),
+          supabase.from("profiles").select("id, display_name, email, created_at, disabled_at").order("created_at", { ascending: false }),
           supabase.from("user_roles").select("user_id, role"),
           supabase.from("subscriptions").select("id, user_id, plan, status, current_period_end, created_at").order("created_at", { ascending: false }),
           supabase.from("lesson_attempts").select("user_id, level, mpm, accuracy, created_at").order("created_at", { ascending: false }).limit(2000),
@@ -401,6 +402,19 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
   const unreplied = messages.filter((m) => !m.replied_at);
   const replied = messages.filter((m) => !!m.replied_at);
 
+  async function deleteMsg(id: string) {
+    if (!confirm("Supprimer ce message définitivement ?")) return;
+    setSending(true);
+    try {
+      await supabase.from("contact_messages").delete().eq("id", id);
+      window.location.reload();
+    } catch (e) {
+      alert("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function handleSend(m: ContactMsg) {
     if (!replyText.trim()) return;
     setSending(true);
@@ -437,8 +451,20 @@ function MessagesTab({ messages }: { messages: ContactMsg[] }) {
             </div>
             {m.subject && <p className="mt-1 text-sm text-[#5a7a9a] truncate">{m.subject}</p>}
           </div>
-          <span className="ml-4 shrink-0 text-xs text-[#5a7a9a]">
-            {new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+          <span className="ml-4 flex shrink-0 items-center gap-2">
+            <span className="text-xs text-[#5a7a9a]">
+              {new Date(m.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </span>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); deleteMsg(m.id); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); deleteMsg(m.id); } }}
+              title="Supprimer ce message"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[#dc2626] hover:bg-[#fee2e2] transition cursor-pointer"
+            >
+              🗑
+            </span>
           </span>
         </button>
         {expanded === m.id && (
@@ -545,6 +571,7 @@ function UsersTab({
 }) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
 
   const roleMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -577,6 +604,40 @@ function UsersTab({
     const roleMatch = roleFilter === "all" || role === roleFilter;
     return nameMatch && roleMatch;
   });
+
+  async function toggleDisable(userId: string, currentlyDisabled: boolean) {
+    setActionBusy(userId);
+    try {
+      if (currentlyDisabled) {
+        await supabase.from("profiles").update({ disabled_at: null }).eq("id", userId);
+      } else {
+        await supabase.from("profiles").update({ disabled_at: new Date().toISOString() }).eq("id", userId);
+      }
+      window.location.reload();
+    } catch (e) {
+      alert("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setActionBusy(null);
+    }
+  }
+
+  async function hardDelete(userId: string, email: string | null) {
+    if (!confirm(`Supprimer définitivement ${email || userId} ?\n\nToutes ses données (progression, abonnement, rôle) seront perdues.`)) return;
+    setActionBusy(userId);
+    try {
+      // Delete in order to respect foreign keys
+      await supabase.from("lesson_attempts").delete().eq("user_id", userId);
+      await supabase.from("subscriptions").delete().eq("user_id", userId);
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      await supabase.from("profiles").delete().eq("id", userId);
+      alert("✅ Utilisateur supprimé.");
+      window.location.reload();
+    } catch (e) {
+      alert("Erreur : " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setActionBusy(null);
+    }
+  }
 
   return (
     <div>
@@ -613,33 +674,67 @@ function UsersTab({
               <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Email</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Rôle</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Niveaux</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Dernière activité</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Abonnement</th>
+              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Statut</th>
               <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Inscrit le</th>
+              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#f1f5f9]">
             {filtered.map((p) => {
               const role = roleMap[p.id] ?? "particulier";
               const lessons = lessonCount[p.id] ?? 0;
-              const last = lastActivity[p.id];
-              const sub = subMap[p.id];
+              const isDisabled = !!p.disabled_at;
+              const isSuperAdmin = role === "super_admin";
+              const busy = actionBusy === p.id;
               return (
-                <tr key={p.id} className="hover:bg-[#f8fafc]">
-                  <td className="px-4 py-3 font-medium text-[#1e3a5f]">{p.display_name || "—"}</td>
+                <tr key={p.id} className={`hover:bg-[#f8fafc] ${isDisabled ? 'opacity-50' : ''}`}>
+                  <td className="px-4 py-3 font-medium text-[#1e3a5f]">
+                    {p.display_name || "—"}
+                  </td>
                   <td className="px-4 py-3 text-[#5a7a9a]">{p.email || "—"}</td>
                   <td className="px-4 py-3">
                     <RoleBadge role={role} />
                   </td>
                   <td className="px-4 py-3 font-mono text-[#4361ee]">{lessons}</td>
-                  <td className="px-4 py-3 text-[#5a7a9a]">
-                    {last ? new Date(last).toLocaleDateString("fr-FR") : "—"}
-                  </td>
                   <td className="px-4 py-3">
-                    {sub ? <SubBadge status={sub.status} /> : <span className="text-[#5a7a9a]">—</span>}
+                    {isDisabled ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[#d97706]">
+                        ⚠️ Désactivé
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[#16a34a]">
+                        ✓ Actif
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-[#5a7a9a]">
                     {new Date(p.created_at).toLocaleDateString("fr-FR")}
+                  </td>
+                  <td className="px-4 py-3">
+                    {!isSuperAdmin && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          disabled={busy}
+                          onClick={() => toggleDisable(p.id, isDisabled)}
+                          title={isDisabled ? "Réactiver" : "Désactiver"}
+                          className={`rounded px-2 py-1 text-xs font-medium transition disabled:opacity-40 ${
+                            isDisabled
+                              ? 'bg-[#dcfce7] text-[#16a34a] hover:bg-[#bbf7d0]'
+                              : 'bg-[#fef3c7] text-[#d97706] hover:bg-[#fde68a]'
+                          }`}
+                        >
+                          {busy ? '…' : isDisabled ? '✅ Réactiver' : '⏸ Désactiver'}
+                        </button>
+                        <button
+                          disabled={busy}
+                          onClick={() => hardDelete(p.id, p.email)}
+                          title="Supprimer définitivement"
+                          className="rounded px-2 py-1 text-xs font-medium bg-[#fee2e2] text-[#dc2626] hover:bg-[#fecaca] transition disabled:opacity-40"
+                        >
+                          {busy ? '…' : '🗑 Supprimer'}
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               );
