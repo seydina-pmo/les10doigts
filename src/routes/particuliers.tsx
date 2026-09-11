@@ -1,8 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
-const STRIPE_URL = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200";
-
 export const Route = createFileRoute("/particuliers")({
   head: () => ({
     meta: [
@@ -90,14 +88,24 @@ function Page() {
           >
             🚀 Essai gratuit — 3 niveaux offerts
           </Link>
-          <a
-            href={STRIPE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md border border-copper/40 bg-copper/5 px-6 py-3.5 text-sm font-medium text-copper-deep transition hover:-translate-y-0.5 hover:bg-copper/10"
+          <button
+            onClick={async () => {
+              try {
+                const { createPayTechPayment } = await import("@/lib/paytech.functions");
+                const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
+                if (res.success && res.redirectUrl) {
+                  window.location.href = res.redirectUrl;
+                } else {
+                  alert(res.error || "Erreur de connexion à PayTech");
+                }
+              } catch (err: any) {
+                alert("Erreur de paiement: " + err.message);
+              }
+            }}
+            className="rounded-md border border-copper/40 bg-copper/5 px-6 py-3.5 text-sm font-medium text-copper-deep transition hover:-translate-y-0.5 hover:bg-copper/10 cursor-pointer"
           >
-            💳 S&apos;abonner — 10 € / mois
-          </a>
+            💳 S&apos;abonner — Wave / Orange Money / Carte
+          </button>
         </div>
       </section>
 
@@ -179,19 +187,29 @@ function Page() {
               ))}
             </ul>
 
-            <a
-              href={STRIPE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-8 block rounded-md bg-[#4361ee] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[#3451d1]"
+            <button
+              onClick={async () => {
+                try {
+                  const { createPayTechPayment } = await import("@/lib/paytech.functions");
+                  const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
+                  if (res.success && res.redirectUrl) {
+                    window.location.href = res.redirectUrl;
+                  } else {
+                    alert(res.error || "Erreur de connexion à PayTech");
+                  }
+                } catch (err: any) {
+                  alert("Erreur de paiement: " + err.message);
+                }
+              }}
+              className="mt-8 block w-full rounded-md bg-[#4361ee] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[#3451d1] cursor-pointer"
             >
-              S&apos;abonner maintenant
-            </a>
+              S&apos;abonner maintenant (PayTech)
+            </button>
           </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-ink-soft">
-          Paiement sécurisé par carte bancaire ou Mobile Money. Résiliation à tout moment.
+          Paiement sécurisé par carte bancaire ou Mobile Money (Wave, Orange Money). Résiliation à tout moment.
         </p>
       </section>
 
@@ -222,7 +240,7 @@ function Page() {
             />
             <FAQ
               q="Quels moyens de paiement acceptez-vous ?"
-              a="Carte bancaire (Visa, Mastercard) et Mobile Money. Tous les paiements sont sécurisés et sans engagement — vous pouvez annuler à tout moment."
+              a="Wave, Orange Money, Free Money et Carte bancaire (Visa, Mastercard). Tous les paiements sont sécurisés et sans engagement."
             />
           </div>
         </div>
@@ -241,14 +259,24 @@ function Page() {
             >
               Essai gratuit — 3 niveaux offerts
             </Link>
-            <a
-              href={STRIPE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-md border border-white/20 px-6 py-3 text-sm font-medium text-foreground transition hover:bg-white/5"
+            <button
+              onClick={async () => {
+                try {
+                  const { createPayTechPayment } = await import("@/lib/paytech.functions");
+                  const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
+                  if (res.success && res.redirectUrl) {
+                    window.location.href = res.redirectUrl;
+                  } else {
+                    alert(res.error || "Erreur de connexion à PayTech");
+                  }
+                } catch (err: any) {
+                  alert("Erreur de paiement: " + err.message);
+                }
+              }}
+              className="rounded-md border border-white/20 px-6 py-3 text-sm font-medium text-foreground transition hover:bg-white/5 cursor-pointer"
             >
-              S&apos;abonner — 10 €/mois
-            </a>
+              S&apos;abonner — Wave / Orange Money / Carte
+            </button>
           </div>
         </div>
       </section>

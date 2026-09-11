@@ -51,9 +51,9 @@ function Page() {
           <section>
             <h2 className="font-serif text-xl text-[#1e3a5f]">4. Abonnement et paiement</h2>
             <ul className="mt-3 list-disc pl-6 space-y-1">
-              <li><strong>Particulier</strong> : 10 € par mois, sans engagement</li>
-              <li><strong>École</strong> : 115 € par mois (ou 1 150 € par an)</li>
-              <li>Le paiement est traité de manière sécurisée par <strong>Stripe</strong></li>
+              <li><strong>Particulier</strong> : 6 500 FCFA (~10 €) par mois, sans engagement</li>
+              <li><strong>École</strong> : 75 000 FCFA (~115 €) par an / formule établissement</li>
+              <li>Le paiement est traité de manière sécurisée par <strong>PayTech</strong> (Wave, Orange Money, Free Money, Carte Visa/Mastercard)</li>
               <li>Vous pouvez résilier à tout moment depuis votre espace ou en nous contactant</li>
               <li>Aucun remboursement n&apos;est effectué pour le mois en cours</li>
             </ul>

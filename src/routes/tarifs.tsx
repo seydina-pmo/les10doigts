@@ -16,7 +16,7 @@ export const Route = createFileRoute("/tarifs")({
 });
 
 
-const plans: { name: string; price: string; note: string; bullets: string[]; cta: string; to?: string; href?: string; featured?: boolean }[] = [
+const plans: { name: string; price: string; note: string; bullets: string[]; cta: string; to?: string; href?: string; isPayTech?: boolean; featured?: boolean }[] = [
   {
     name: "Découverte",
     price: "Gratuit",
@@ -27,15 +27,15 @@ const plans: { name: string; price: string; note: string; bullets: string[]; cta
   },
   {
     name: "Particulier",
-    price: "10 €",
-    note: "par mois",
+    price: "6 500 FCFA",
+    note: "par mois (~10 €)",
     bullets: [
       "100 niveaux, 10 paliers",
-      "Heatmap des touches fragiles",
+      "Paiement par Wave, Orange Money ou Carte",
       "Certifications Bronze · Argent · Or",
     ],
-    cta: "S'abonner",
-    href: "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200",
+    cta: "S'abonner avec PayTech",
+    isPayTech: true,
     featured: true,
   },
   {
@@ -85,7 +85,31 @@ function Page() {
                 </li>
               ))}
             </ul>
-            {p.href ? (
+            {p.isPayTech ? (
+              <button
+                onClick={async () => {
+                  try {
+                    const { createPayTechPayment } = await import("@/lib/paytech.functions");
+                    const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
+                    if (res.success && res.redirectUrl) {
+                      window.location.href = res.redirectUrl;
+                    } else {
+                      alert(res.error || "Erreur de connexion à PayTech");
+                    }
+                  } catch (err: any) {
+                    alert("Erreur de paiement: " + err.message);
+                  }
+                }}
+                className={
+                  "mt-8 inline-block w-full rounded-md px-4 py-2.5 text-center text-sm font-medium transition cursor-pointer " +
+                  (p.featured
+                    ? "bg-copper text-paper hover:bg-copper-deep"
+                    : "border border-rule hover:bg-paper-deep")
+                }
+              >
+                {p.cta}
+              </button>
+            ) : p.href ? (
               <a
                 href={p.href}
                 target="_blank"

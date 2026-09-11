@@ -1,7 +1,5 @@
 import { Link } from "@tanstack/react-router";
 
-const STRIPE_URL = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200";
-
 /**
  * Paywall — displayed when a free user tries to access level > 3.
  * Uses explicit colors to be readable on both light and dark backgrounds.
@@ -50,14 +48,24 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href={STRIPE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-md bg-[#4361ee] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#3451d1]"
+        <button
+          onClick={async () => {
+            try {
+              const { createPayTechPayment } = await import("@/lib/paytech.functions");
+              const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
+              if (res.success && res.redirectUrl) {
+                window.location.href = res.redirectUrl;
+              } else {
+                alert(res.error || "Erreur de connexion à PayTech");
+              }
+            } catch (err: any) {
+              alert("Erreur de paiement: " + err.message);
+            }
+          }}
+          className="rounded-md bg-[#4361ee] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#3451d1] cursor-pointer"
         >
-          S&apos;abonner — 10 €/mois
-        </a>
+          💳 S&apos;abonner — Wave / Orange Money / Carte (6 500 FCFA / mois)
+        </button>
         <Link
           to="/app"
           className="rounded-md border border-[#e2e8f0] px-5 py-3 text-sm text-[#5a7a9a] transition hover:bg-[#f1f5f9]"

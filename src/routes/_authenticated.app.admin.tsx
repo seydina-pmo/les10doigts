@@ -937,7 +937,7 @@ function SchoolSection({ title, color, schools, busy, onActivate, onReject }: {
 
 /* ---------- School Card with full workflow ---------- */
 
-const STRIPE_SCHOOL_LINK = "https://buy.stripe.com/test_14A7sE0q95agd2kbJW8N200"; // TODO: replace with real school payment link
+const PAYTECH_SCHOOL_LINK = "https://paytech.sn"; // PayTech mobile money payment for schools
 
 function SchoolCard({
   school: s, busy, onActivate, onReject,
@@ -968,7 +968,7 @@ function SchoolCard({
   async function sendNotification(type: "received" | "studying" | "payment" | "rejected") {
     setEmailStatus("envoi...");
     try {
-      await notify({ data: { to: s.contact_email, schoolName: s.name, contactName: s.contact_name, type, paymentLink: STRIPE_SCHOOL_LINK } });
+      await notify({ data: { to: s.contact_email, schoolName: s.name, contactName: s.contact_name, type, paymentLink: PAYTECH_SCHOOL_LINK } });
       setEmailStatus("✅ Email envoyé !");
       setTimeout(() => setEmailStatus(null), 3000);
     } catch (e) {
