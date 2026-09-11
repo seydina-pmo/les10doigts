@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { KeyboardFR, FINGER_LEGEND } from "@/components/KeyboardFR";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { useInView } from "@/hooks/useAnimations";
 
 const OG_IMAGE = "https://les10doigts.com/logo.png";
 
@@ -29,7 +30,6 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-
 const PHRASE = "la saisie n'est pas un talent, c'est une méthode.";
 
 function Landing() {
@@ -48,6 +48,9 @@ function Landing() {
 
 function Hero() {
   const [typed, setTyped] = useState("");
+  const heroText = useInView();
+  const heroKeyboard = useInView();
+
   useEffect(() => {
     let i = 0;
     const id = setInterval(() => {
@@ -59,7 +62,10 @@ function Hero() {
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white to-[#f5f7fb] pb-24 pt-12 md:pt-20">
-      <div className="mx-auto max-w-5xl px-6 text-center">
+      <div
+        ref={heroText.ref}
+        className={`mx-auto max-w-5xl px-6 text-center ${heroText.inView ? 'anim-reveal-up' : 'anim-hidden'}`}
+      >
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">
           cahier d&apos;apprentissage, version 2026
         </p>
@@ -78,7 +84,7 @@ function Hero() {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/auth"
-            className="rounded-full bg-[#4361ee] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/25 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl hover:shadow-[#4361ee]/30"
+            className="glow-blue rounded-full bg-[#4361ee] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/25 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl hover:shadow-[#4361ee]/30"
           >
             Commencer le test de positionnement
           </Link>
@@ -92,7 +98,10 @@ function Hero() {
       </div>
 
       {/* Keyboard card with glow */}
-      <div className="mx-auto mt-16 max-w-5xl px-6">
+      <div
+        ref={heroKeyboard.ref}
+        className={`mx-auto mt-16 max-w-5xl px-6 ${heroKeyboard.inView ? 'anim-reveal-scale anim-delay-3' : 'anim-hidden'}`}
+      >
         <div className="overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_25px_60px_-15px_rgba(30,58,95,0.12)]">
           <div className="flex items-center justify-between border-b border-[#e2e8f0] bg-[#f8fafc] px-6 py-3 font-mono text-xs uppercase tracking-[0.18em] text-[#5a7a9a]">
             <span>leçon 01 · rangée de repos</span>
@@ -129,21 +138,30 @@ function KeyboardPreview() {
 }
 
 function VideoSection() {
+  const heading = useInView();
+  const video = useInView();
+  const steps = useInView();
+
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-4xl px-6 text-center">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">
-          comment ça marche
-        </p>
-        <h2 className="mt-4 font-serif text-3xl text-[#1e3a5f] md:text-4xl">
-          Découvrez la méthode en vidéo
-        </h2>
-        <p className="mx-auto mt-3 max-w-xl text-[#5a7a9a]">
-          Deux minutes pour comprendre comment passer d&apos;une saisie lente
-          à une frappe rapide et précise, sans regarder le clavier.
-        </p>
+        <div ref={heading.ref} className={heading.inView ? 'anim-reveal-up' : 'anim-hidden'}>
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">
+            comment ça marche
+          </p>
+          <h2 className="mt-4 font-serif text-3xl text-[#1e3a5f] md:text-4xl">
+            Découvrez la méthode en vidéo
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-[#5a7a9a]">
+            Deux minutes pour comprendre comment passer d&apos;une saisie lente
+            à une frappe rapide et précise, sans regarder le clavier.
+          </p>
+        </div>
 
-        <div className="mx-auto mt-10 aspect-video max-w-3xl overflow-hidden rounded-2xl border border-[#e2e8f0] shadow-[0_25px_60px_-15px_rgba(30,58,95,0.15)]">
+        <div
+          ref={video.ref}
+          className={`mx-auto mt-10 aspect-video max-w-3xl overflow-hidden rounded-2xl border border-[#e2e8f0] shadow-[0_25px_60px_-15px_rgba(30,58,95,0.15)] ${video.inView ? 'anim-reveal-scale anim-delay-2' : 'anim-hidden'}`}
+        >
           <iframe
             src="https://www.youtube.com/embed/sfyo8gR2KtE?rel=0&modestbranding=1"
             title="Présentation de la Méthode des 10 Doigts"
@@ -154,7 +172,10 @@ function VideoSection() {
           />
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-3xl gap-6 text-left sm:grid-cols-3">
+        <div
+          ref={steps.ref}
+          className="mx-auto mt-14 grid max-w-3xl gap-6 text-left sm:grid-cols-3"
+        >
           {[
             { icon: "🖐️", step: "01", title: "Positionnez", desc: "Placez vos doigts sur QSDF et JKLM, la rangée de repos." },
             { icon: "⌨️", step: "02", title: "Tapez", desc: "Suivez le texte à l'écran sans regarder le clavier. 10 minutes par jour." },
@@ -162,8 +183,7 @@ function VideoSection() {
           ].map((s, i) => (
             <div
               key={s.title}
-              className="group rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:shadow-[#4361ee]/8"
-              style={{ animationDelay: `${i * 100}ms` }}
+              className={`group rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:shadow-[#4361ee]/8 ${steps.inView ? `anim-reveal-up anim-delay-${i + 1}` : 'anim-hidden'}`}
             >
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#4361ee]/10 text-lg">{s.icon}</span>
               <p className="mt-4 font-mono text-xs text-[#4361ee]">étape {s.step}</p>
@@ -178,6 +198,8 @@ function VideoSection() {
 }
 
 function Manifesto() {
+  const heading = useInView();
+  const cards = useInView();
   const lines = useMemo(
     () => [
       "La saisie n'est pas un talent, c'est une méthode.",
@@ -190,12 +212,12 @@ function Manifesto() {
   return (
     <section className="bg-[#f8fafc] py-24">
       <div className="mx-auto max-w-5xl px-6">
-        <p className="text-center font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">manifeste</p>
-        <div className="mt-12 grid gap-8 md:grid-cols-2">
+        <p ref={heading.ref} className={`text-center font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee] ${heading.inView ? 'anim-reveal-up' : 'anim-hidden'}`}>manifeste</p>
+        <div ref={cards.ref} className="mt-12 grid gap-8 md:grid-cols-2">
           {lines.map((l, i) => (
             <div
               key={i}
-              className="flex gap-5 rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className={`flex gap-5 rounded-2xl border border-[#e2e8f0] bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${cards.inView ? `anim-reveal-${i % 2 === 0 ? 'left' : 'right'} anim-delay-${i + 1}` : 'anim-hidden'}`}
             >
               <span className="font-serif text-4xl font-light text-[#4361ee]/30">{String(i + 1).padStart(2, "0")}</span>
               <p className="font-serif text-xl leading-snug text-[#1e3a5f] md:text-2xl">{l}</p>
@@ -208,27 +230,36 @@ function Manifesto() {
 }
 
 function Audiences() {
+  const heading = useInView();
+  const cardsRef = useInView();
+
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-5xl px-6 text-center">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">à qui s&apos;adresse la méthode</p>
-        <h2 className="mt-4 font-serif text-3xl text-[#1e3a5f] md:text-5xl">Deux publics, une même rigueur.</h2>
+        <div ref={heading.ref} className={heading.inView ? 'anim-reveal-blur' : 'anim-hidden'}>
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">à qui s&apos;adresse la méthode</p>
+          <h2 className="mt-4 font-serif text-3xl text-[#1e3a5f] md:text-5xl">Deux publics, une même rigueur.</h2>
+        </div>
 
-        <div className="mt-14 grid gap-8 text-left md:grid-cols-2">
-          <AudienceCard
-            to="/ecoles"
-            tag="Écoles"
-            title="Classes du primaire et du secondaire"
-            body="Un parcours structuré, sous le regard d'un enseignant. Création de classe, comptes élèves sans email obligatoire, suivi de cohorte."
-            cta="Découvrir l'espace école"
-          />
-          <AudienceCard
-            to="/particuliers"
-            tag="Particuliers"
-            title="Pros, étudiants, autodidactes"
-            body="Vous écrivez tous les jours mais regardez encore le clavier ? Cette méthode est conçue pour vous faire passer le cap."
-            cta="Découvrir l'offre particulier"
-          />
+        <div ref={cardsRef.ref} className="mt-14 grid gap-8 text-left md:grid-cols-2">
+          <div className={cardsRef.inView ? 'anim-reveal-left anim-delay-2' : 'anim-hidden'}>
+            <AudienceCard
+              to="/ecoles"
+              tag="Écoles"
+              title="Classes du primaire et du secondaire"
+              body="Un parcours structuré, sous le regard d'un enseignant. Création de classe, comptes élèves sans email obligatoire, suivi de cohorte."
+              cta="Découvrir l'espace école"
+            />
+          </div>
+          <div className={cardsRef.inView ? 'anim-reveal-right anim-delay-3' : 'anim-hidden'}>
+            <AudienceCard
+              to="/particuliers"
+              tag="Particuliers"
+              title="Pros, étudiants, autodidactes"
+              body="Vous écrivez tous les jours mais regardez encore le clavier ? Cette méthode est conçue pour vous faire passer le cap."
+              cta="Découvrir l'offre particulier"
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -267,6 +298,7 @@ function AudienceCard({
 
 function CTA() {
   const [loggedIn, setLoggedIn] = useState(false);
+  const ctaRef = useInView();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setLoggedIn(!!data.session));
@@ -276,7 +308,7 @@ function CTA() {
 
   return (
     <section className="bg-[#1e3a5f] py-24">
-      <div className="mx-auto max-w-5xl px-6 text-center">
+      <div ref={ctaRef.ref} className={`mx-auto max-w-5xl px-6 text-center ${ctaRef.inView ? 'anim-reveal-blur' : 'anim-hidden'}`}>
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-[#4361ee]">commencer</p>
         <h2 className="mx-auto mt-5 max-w-3xl font-serif text-3xl text-white md:text-5xl lg:text-6xl">
           Dix minutes aujourd&apos;hui, un clavier maîtrisé dans trois mois.

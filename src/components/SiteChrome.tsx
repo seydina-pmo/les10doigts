@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useInView } from "@/hooks/useAnimations";
 
 const NAV = [
   { to: "/methode", label: "La méthode" },
@@ -62,26 +63,53 @@ export function SiteHeader() {
   );
 }
 
+function AnimatedStat({ end, suffix, label }: { end: number; suffix: string; label: string }) {
+  const { ref, inView } = useInView();
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let raf: number;
+    const t0 = performance.now();
+    const duration = 2000;
+    function tick(now: number) {
+      const progress = Math.min((now - t0) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(eased * end));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    }
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, end]);
+
+  return (
+    <div ref={ref} className={inView ? 'anim-reveal-up' : 'anim-hidden'}>
+      <p className="font-serif text-2xl font-bold text-[#4361ee]">
+        {inView ? value.toLocaleString("fr-FR") : "0"}{suffix}
+      </p>
+      <p className="mt-1 text-xs text-[#5a7a9a]">{label}</p>
+    </div>
+  );
+}
+
 export function SiteFooter() {
+  const footerLinks = useInView();
+
   return (
     <footer className="border-t border-[#e2e8f0] bg-[#f8fafc]">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        {/* Trust numbers */}
+        {/* Trust numbers with animated counters */}
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4 text-center">
-          {[
-            { n: "1 247", label: "apprenants formés" },
-            { n: "230+", label: "écoles partenaires" },
-            { n: "98%", label: "taux de satisfaction" },
-            { n: "100", label: "niveaux progressifs" },
-          ].map((s) => (
-            <div key={s.label}>
-              <p className="font-serif text-2xl font-bold text-[#4361ee]">{s.n}</p>
-              <p className="mt-1 text-xs text-[#5a7a9a]">{s.label}</p>
-            </div>
-          ))}
+          <AnimatedStat end={1247} suffix="" label="apprenants form\u00e9s" />
+          <AnimatedStat end={230} suffix="+" label="\u00e9coles partenaires" />
+          <AnimatedStat end={98} suffix="%" label="taux de satisfaction" />
+          <AnimatedStat end={100} suffix="" label="niveaux progressifs" />
         </div>
 
-        <div className="flex flex-col gap-6 text-sm text-[#5a7a9a] md:flex-row md:items-center md:justify-between">
+        <div
+          ref={footerLinks.ref}
+          className={`flex flex-col gap-6 text-sm text-[#5a7a9a] md:flex-row md:items-center md:justify-between ${footerLinks.inView ? 'anim-reveal-up anim-delay-3' : 'anim-hidden'}`}
+        >
           <Link to="/" className="flex items-center gap-3">
             <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" />
             <span className="font-serif text-base text-[#1e3a5f]">
@@ -90,15 +118,15 @@ export function SiteFooter() {
           </Link>
 
           <nav className="flex flex-wrap gap-4 text-xs">
-            <Link to="/ecoles" className="hover:text-[#1e3a5f] transition">Écoles</Link>
+            <Link to="/ecoles" className="hover:text-[#1e3a5f] transition">&Eacute;coles</Link>
             <Link to="/particuliers" className="hover:text-[#1e3a5f] transition">Particuliers</Link>
             <Link to="/tarifs" className="hover:text-[#1e3a5f] transition">Tarifs</Link>
             <Link to="/contact" className="hover:text-[#1e3a5f] transition">Contact</Link>
-            <Link to="/confidentialite" className="hover:text-[#1e3a5f] transition">Confidentialité</Link>
+            <Link to="/confidentialite" className="hover:text-[#1e3a5f] transition">Confidentialit&eacute;</Link>
             <Link to="/conditions" className="hover:text-[#1e3a5f] transition">Conditions d&apos;utilisation</Link>
           </nav>
 
-          <p className="text-xs">&copy; 2026, tous droits réservés.</p>
+          <p className="text-xs">&copy; 2026, tous droits r&eacute;serv&eacute;s.</p>
         </div>
       </div>
     </footer>
