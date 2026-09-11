@@ -103,8 +103,8 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-6 py-10">
         {/* Trust numbers with animated counters */}
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4 text-center">
-          <AnimatedStat end={1247} suffix="" label="apprenants form\u00e9s" />
-          <AnimatedStat end={230} suffix="+" label="\u00e9coles partenaires" />
+          <AnimatedStat end={1247} suffix="" label="apprenants actifs" />
+          <AnimatedStat end={230} suffix="+" label="partenaires scolaires" />
           <AnimatedStat end={98} suffix="%" label="taux de satisfaction" />
           <AnimatedStat end={100} suffix="" label="niveaux progressifs" />
         </div>
