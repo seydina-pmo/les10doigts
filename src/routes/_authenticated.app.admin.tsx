@@ -364,6 +364,8 @@ function OverviewTab({
           <div className="mt-4 divide-y divide-[#f1f5f9]">
             {topUsers.map(([uid, count], i) => {
               const p = profiles.find((x) => x.id === uid);
+              const isSuperAdmin = roles.some((r) => r.user_id === uid && r.role === "super_admin");
+              const displayName = p?.display_name || p?.email || (isSuperAdmin ? "Super Admin" : `Utilisateur (${uid.slice(0, 8)})`);
               return (
                 <div key={uid} className="flex items-center justify-between py-2.5">
                   <div className="flex items-center gap-3">
@@ -371,7 +373,7 @@ function OverviewTab({
                       {i + 1}
                     </span>
                     <div>
-                      <p className="text-sm font-medium text-[#1e3a5f]">{p?.display_name || p?.email || uid.slice(0, 8)}</p>
+                      <p className="text-sm font-medium text-[#1e3a5f]">{displayName}</p>
                     </div>
                   </div>
                   <span className="font-mono text-sm font-bold text-[#4361ee]">{count} niveaux</span>
@@ -689,7 +691,7 @@ function UsersTab({
               return (
                 <tr key={p.id} className={`hover:bg-[#f8fafc] ${isDisabled ? 'opacity-50' : ''}`}>
                   <td className="px-4 py-3 font-medium text-[#1e3a5f]">
-                    {p.display_name || "—"}
+                    {p.display_name || (isSuperAdmin ? "Super Admin" : "—")}
                   </td>
                   <td className="px-4 py-3 text-[#5a7a9a]">{p.email || "—"}</td>
                   <td className="px-4 py-3">
