@@ -27,14 +27,14 @@ const plans: { name: string; price: string; note: string; bullets: string[]; cta
   },
   {
     name: "Particulier",
-    price: "6 500 FCFA",
-    note: "par mois (~10 €)",
+    price: "10 €",
+    note: "par mois",
     bullets: [
       "100 niveaux, 10 paliers",
-      "Paiement par Wave, Orange Money ou Carte",
+      "Heatmap des touches fragiles",
       "Certifications Bronze · Argent · Or",
     ],
-    cta: "S'abonner avec PayTech",
+    cta: "S'abonner",
     isPayTech: true,
     featured: true,
   },

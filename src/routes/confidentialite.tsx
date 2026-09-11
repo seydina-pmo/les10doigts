@@ -37,7 +37,7 @@ function Page() {
               <li><strong>Compte utilisateur</strong> : nom, adresse e-mail, mot de passe hashé</li>
               <li><strong>Connexion Google OAuth</strong> : nom et adresse e-mail de votre compte Google</li>
               <li><strong>Données d&apos;exercice</strong> : niveau atteint, vitesse de frappe (MPM), précision, touches en erreur</li>
-              <li><strong>Paiement</strong> : les paiements sont traités de manière sécurisée par PayTech (Wave, Orange Money, Free Money, Carte bancaire). Nous ne stockons aucune donnée bancaire.</li>
+              <li><strong>Paiement</strong> : les paiements sont traités de manière sécurisée par notre prestataire de paiement sécurisé. Nous ne stockons aucune donnée bancaire.</li>
             </ul>
           </section>
 
@@ -74,7 +74,7 @@ function Page() {
             </p>
             <ul className="mt-2 list-disc pl-6 space-y-1">
               <li><strong>Supabase</strong> (hébergement et base de données)</li>
-              <li><strong>PayTech / InTech</strong> (traitement des paiements Wave, Orange Money, Carte)</li>
+              <li><strong>Prestataire de paiement certifié</strong> (traitement des paiements)</li>
               <li><strong>Vercel</strong> (hébergement du site)</li>
             </ul>
           </section>

@@ -14,11 +14,11 @@ export const createPayTechPayment = createServerFn({ method: "POST" })
     const apiSecret = process.env.PAYTECH_API_SECRET;
     const env = process.env.PAYTECH_ENV || "test";
 
-    // Prices in XOF (FCFA)
-    // Particulier: 6 500 FCFA (~10 €)
-    // Ecole: 75 000 FCFA (~115 €)
+    // Prices in EUR (€)
+    // Particulier: 10 €
+    // Ecole: 115 €
     const isEcole = data.plan === "ecole";
-    const itemPrice = isEcole ? 75000 : 6500;
+    const itemPrice = isEcole ? 115 : 10;
     const itemName = isEcole 
       ? "Abonnement Les 10 Doigts - Établissement (1 An)" 
       : "Abonnement Les 10 Doigts - Particulier (Mensuel)";
@@ -29,7 +29,7 @@ export const createPayTechPayment = createServerFn({ method: "POST" })
     const body = {
       item_name: itemName,
       item_price: itemPrice.toString(),
-      currency: "XOF",
+      currency: "EUR",
       ref_command: refCommand,
       command_name: `Paiement ${itemName}`,
       env: env,

@@ -64,7 +64,7 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
           }}
           className="rounded-md bg-[#4361ee] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#3451d1] cursor-pointer"
         >
-          💳 S&apos;abonner — Wave / Orange Money / Carte (6 500 FCFA / mois)
+          S&apos;abonner — 10 €/mois
         </button>
         <Link
           to="/app"
@@ -75,7 +75,7 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </div>
 
       <p className="mt-6 text-xs text-[#5a7a9a]">
-        Paiement sécurisé par carte bancaire ou Mobile Money.
+        Paiement sécurisé par carte bancaire.
       </p>
     </div>
   );
