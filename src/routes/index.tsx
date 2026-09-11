@@ -242,24 +242,22 @@ function Audiences() {
         </div>
 
         <div ref={cardsRef.ref} className="mt-14 grid gap-8 text-left md:grid-cols-2">
-          <div className={cardsRef.inView ? 'anim-reveal-left anim-delay-2' : 'anim-hidden'}>
-            <AudienceCard
-              to="/ecoles"
-              tag="Écoles"
-              title="Classes du primaire et du secondaire"
-              body="Un parcours structuré, sous le regard d'un enseignant. Création de classe, comptes élèves sans email obligatoire, suivi de cohorte."
-              cta="Découvrir l'espace école"
-            />
-          </div>
-          <div className={cardsRef.inView ? 'anim-reveal-right anim-delay-3' : 'anim-hidden'}>
-            <AudienceCard
-              to="/particuliers"
-              tag="Particuliers"
-              title="Pros, étudiants, autodidactes"
-              body="Vous écrivez tous les jours mais regardez encore le clavier ? Cette méthode est conçue pour vous faire passer le cap."
-              cta="Découvrir l'offre particulier"
-            />
-          </div>
+          <AudienceCard
+            to="/ecoles"
+            tag="Écoles"
+            title="Classes du primaire et du secondaire"
+            body="Un parcours structuré, sous le regard d'un enseignant. Création de classe, comptes élèves sans email obligatoire, suivi de cohorte."
+            cta="Découvrir l'espace école"
+            animClass={cardsRef.inView ? 'anim-reveal-left anim-delay-2' : 'anim-hidden'}
+          />
+          <AudienceCard
+            to="/particuliers"
+            tag="Particuliers"
+            title="Pros, étudiants, autodidactes"
+            body="Vous écrivez tous les jours mais regardez encore le clavier ? Cette méthode est conçue pour vous faire passer le cap."
+            cta="Découvrir l'offre particulier"
+            animClass={cardsRef.inView ? 'anim-reveal-right anim-delay-3' : 'anim-hidden'}
+          />
         </div>
       </div>
     </section>
@@ -272,17 +270,19 @@ function AudienceCard({
   title,
   body,
   cta,
+  animClass = "",
 }: {
   to: "/ecoles" | "/particuliers";
   tag: string;
   title: string;
   body: string;
   cta: string;
+  animClass?: string;
 }) {
   return (
     <Link
       to={to}
-      className="group rounded-2xl border border-[#e2e8f0] bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-[#4361ee]/30 hover:shadow-lg hover:shadow-[#4361ee]/8"
+      className={`group block rounded-2xl border border-[#e2e8f0] bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:border-[#4361ee]/30 hover:shadow-lg hover:shadow-[#4361ee]/8 ${animClass}`}
     >
       <span className="inline-block rounded-full bg-[#4361ee]/10 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] font-semibold text-[#4361ee]">
         {tag}

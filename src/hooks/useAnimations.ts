@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 /**
- * Returns a ref and a boolean — true when the element has entered the viewport.
- * Once triggered it stays true (fires only once).
+ * Returns a ref and a boolean — true when the element is in the viewport.
+ * Resets to false when the element leaves, so animations replay.
  */
 export function useInView<T extends HTMLElement = HTMLDivElement>(
   threshold = 0.15,
@@ -15,10 +15,7 @@ export function useInView<T extends HTMLElement = HTMLDivElement>(
     if (!el) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          obs.disconnect();
-        }
+        setInView(entry.isIntersecting);
       },
       { threshold },
     );

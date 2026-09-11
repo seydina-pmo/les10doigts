@@ -68,7 +68,10 @@ function AnimatedStat({ end, suffix, label }: { end: number; suffix: string; lab
   const [value, setValue] = useState(0);
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView) {
+      setValue(0);
+      return;
+    }
     let raf: number;
     const t0 = performance.now();
     const duration = 2000;
