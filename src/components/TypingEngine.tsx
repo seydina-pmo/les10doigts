@@ -43,7 +43,9 @@ export function TypingEngine({
 
   // Re-focus when clicking anywhere in the container
   const focusInput = useCallback(() => {
-    inputRef.current?.focus();
+    requestAnimationFrame(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    });
   }, []);
 
   // Core key handler — runs on every keydown in the hidden input
@@ -165,17 +167,23 @@ export function TypingEngine({
       <input
         ref={inputRef}
         type="text"
-        className="fixed -top-[9999px] -left-[9999px] h-0 w-0 opacity-0"
+        className="sr-only"
+        style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
         autoFocus
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
+        inputMode="none"
         onKeyDown={handleKey}
         onBlur={() => {
           // Re-focus after a short delay (prevents losing focus)
           if (state !== "done") {
-            setTimeout(() => inputRef.current?.focus(), 10);
+            setTimeout(() => {
+              requestAnimationFrame(() => {
+                inputRef.current?.focus({ preventScroll: true });
+              });
+            }, 50);
           }
         }}
       />

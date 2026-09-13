@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { VoiceGuide } from "@/components/VoiceGuide";
 import { bestPerLevel, progressFor, tierFor, TIER_LABEL, TIER_COLOR, type Attempt } from "@/lib/certification";
+import { useSubscription } from "@/lib/subscription";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   head: () => ({ meta: [{ title: "Tableau de bord, La Méthode des 10 Doigts" }] }),
@@ -16,6 +17,10 @@ function Dashboard() {
   const { user, isFirstVisit } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const { subscription, isPaid, isFree, levelLimit } = useSubscription();
+
+  // Detect payment=success in URL
+  const paymentSuccess = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("payment") === "success";
 
   useEffect(() => {
     if (!user) return;
@@ -73,6 +78,55 @@ function Dashboard() {
           <h1 className="mt-2 font-serif text-3xl">Votre progression</h1>
         </div>
         {isFirstVisit && <VoiceGuide page="dashboard" />}
+      </div>
+
+      {/* Payment success banner */}
+      {paymentSuccess && (
+        <div className="rounded-xl border border-[#10b981]/30 bg-[#ecfdf5] p-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <p className="font-medium text-[#065f46]">Paiement reçu avec succès !</p>
+              <p className="text-sm text-[#047857]">Votre abonnement sera activé sous peu. Rechargez la page dans quelques instants.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Subscription card */}
+      <div className="rounded-2xl border border-rule bg-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={"grid h-12 w-12 place-items-center rounded-xl " + (isPaid ? "bg-[#10b981]/15" : "bg-copper/15")}>
+              <span className="text-xl">{isPaid ? "✨" : "🎹"}</span>
+            </div>
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink-soft">Mon abonnement</p>
+              <p className="font-serif text-lg">
+                {isPaid ? (
+                  <span className="text-[#10b981] font-medium">
+                    {subscription?.plan === "school" ? "École" : "Particulier"} — Actif
+                  </span>
+                ) : (
+                  <span className="text-ink-soft">Découverte gratuite</span>
+                )}
+              </p>
+              <p className="text-xs text-ink-soft">
+                {isPaid
+                  ? `Accès à tous les 100 niveaux${subscription?.expires_at ? ` · expire le ${new Date(subscription.expires_at).toLocaleDateString("fr-FR")}` : ""}`
+                  : `Accès limité aux ${levelLimit} premiers niveaux`}
+              </p>
+            </div>
+          </div>
+          {isFree && (
+            <Link
+              to="/tarifs"
+              className="rounded-md bg-copper px-5 py-2.5 text-sm font-medium text-paper transition hover:-translate-y-0.5 hover:bg-copper-deep"
+            >
+              S'abonner →
+            </Link>
+          )}
+        </div>
       </div>
 
       {loading ? (
