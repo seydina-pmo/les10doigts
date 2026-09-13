@@ -1,5 +1,6 @@
 // Système de certification: Bronze / Argent / Or.
 // Barres volontairement exigeantes — l'Or n'est pas un cadeau.
+// Conçu pour ~3 mois d'entraînement régulier avant d'obtenir l'Or.
 
 export type Tier = "or" | "argent" | "bronze" | null;
 
@@ -9,11 +10,13 @@ export type Attempt = {
   accuracy: number;
 };
 
-// Règles : niveaux à valider + seuils minimaux par niveau.
-// L'Or impose en plus une moyenne MPM globale et zéro niveau en dessous du seuil.
+// Règles exigeantes:
+// Bronze: maîtriser les 30 premiers niveaux avec précision et vitesse correcte
+// Argent: maîtriser les 70 premiers niveaux avec des exigences accrues
+// Or:     maîtriser les 100 niveaux avec excellence — vitesse rapide + quasi-zéro erreurs
 export const TIER_RULES = {
-  bronze: { levels: 30, mpm: 22, accuracy: 94, avgMpm: 22 },
-  argent: { levels: 70, mpm: 38, accuracy: 96, avgMpm: 40 },
+  bronze: { levels: 30, mpm: 25, accuracy: 95, avgMpm: 28 },
+  argent: { levels: 70, mpm: 40, accuracy: 97, avgMpm: 45 },
   or:     { levels: 100, mpm: 55, accuracy: 98, avgMpm: 60 },
 } as const;
 
@@ -65,6 +68,34 @@ export function progressFor(
   return { done, total: rule.levels };
 }
 
+/** Returns niveaux that need improvement for a given tier */
+export function weakLevelsFor(
+  attempts: Attempt[],
+  tier: keyof typeof TIER_RULES,
+): { level: number; mpm: number; accuracy: number; needsMpm: boolean; needsAcc: boolean }[] {
+  const rule = TIER_RULES[tier];
+  const best = bestPerLevel(attempts);
+  const weak: { level: number; mpm: number; accuracy: number; needsMpm: boolean; needsAcc: boolean }[] = [];
+  for (let l = 1; l <= rule.levels; l++) {
+    const a = best.get(l);
+    if (!a) {
+      weak.push({ level: l, mpm: 0, accuracy: 0, needsMpm: true, needsAcc: true });
+    } else if (a.mpm < rule.mpm || a.accuracy < rule.accuracy) {
+      weak.push({ level: l, mpm: a.mpm, accuracy: a.accuracy, needsMpm: a.mpm < rule.mpm, needsAcc: a.accuracy < rule.accuracy });
+    }
+  }
+  return weak;
+}
+
+/** Compute the next tier to target */
+export function nextTierTarget(attempts: Attempt[]): keyof typeof TIER_RULES {
+  const current = tierFor(attempts);
+  if (!current) return "bronze";
+  if (current === "bronze") return "argent";
+  if (current === "argent") return "or";
+  return "or"; // Already gold, still show Or
+}
+
 export const TIER_LABEL: Record<Exclude<Tier, null>, string> = {
   bronze: "Bronze",
   argent: "Argent",
@@ -75,4 +106,10 @@ export const TIER_COLOR: Record<Exclude<Tier, null>, string> = {
   bronze: "#a87149",
   argent: "#9aa3ad",
   or: "#c9a227",
+};
+
+export const TIER_ICON: Record<Exclude<Tier, null>, string> = {
+  bronze: "🥉",
+  argent: "🥈",
+  or: "🥇",
 };

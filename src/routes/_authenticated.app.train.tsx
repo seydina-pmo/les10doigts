@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TypingEngine } from "@/components/TypingEngine";
 import { FINGER_LEGEND } from "@/components/KeyboardFR";
@@ -18,6 +18,20 @@ function TrainPage() {
   const [focusMode, setFocusMode] = useState(false);
   const focusContainerRef = useRef<HTMLDivElement>(null);
   const { subscription } = useSubscription();
+  const navigate = useNavigate();
+
+  function goNext() {
+    if (level >= 100) {
+      // Finished all 100 levels — go to certification bilan
+      if (focusMode) {
+        setFocusMode(false);
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }
+      navigate({ to: "/app/certification" });
+    } else {
+      setLevel((l) => Math.min(100, l + 1));
+    }
+  }
 
   // Resume at the highest level already attempted.
   useEffect(() => {
@@ -136,15 +150,7 @@ function TrainPage() {
               key={`focus-${level}`}
               level={level}
               text={lesson.text}
-              onNext={() => {
-                const nextLevel = Math.min(100, level + 1);
-                if (canAccessLevel(subscription, nextLevel)) {
-                  setLevel(nextLevel);
-                } else {
-                  setLevel(nextLevel);
-                  // Paywall will show on next render
-                }
-              }}
+              onNext={goNext}
               focusMode
             />
           </div>
@@ -184,7 +190,7 @@ function TrainPage() {
           key={level}
           level={level}
           text={lesson.text}
-          onNext={() => setLevel((l) => Math.min(100, l + 1))}
+          onNext={goNext}
         />
       ) : (
         <Paywall currentLevel={level} />

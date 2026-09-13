@@ -22,7 +22,17 @@ export function TypingEngine({
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [state, setState] = useState<EngineState>("ready");
   const [saved, setSaved] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Use refs to always have fresh values in the global keydown handler
+  const typedRef = useRef(typed);
+  typedRef.current = typed;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const errorsRef = useRef(errors);
+  errorsRef.current = errors;
+  const startedAtRef = useRef(startedAt);
+  startedAtRef.current = startedAt;
 
   // Reset on level change
   useEffect(() => {
@@ -32,63 +42,63 @@ export function TypingEngine({
     setStartedAt(null);
     setState("ready");
     setSaved(false);
-    // Re-focus the hidden input
-    setTimeout(() => inputRef.current?.focus(), 50);
   }, [level]);
 
-  // Auto-focus on mount
+  // Global keydown handler — captures ALL keyboard input on the page
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
-  }, []);
+    function handleKey(e: KeyboardEvent) {
+      const st = stateRef.current;
+      if (st === "done") return;
 
-  // Re-focus when clicking anywhere in the container
-  const focusInput = useCallback(() => {
-    requestAnimationFrame(() => {
-      inputRef.current?.focus({ preventScroll: true });
-    });
-  }, []);
+      // Ignore if user is typing in another input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
-  // Core key handler — runs on every keydown in the hidden input
-  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (state === "done") return;
+      // Only handle printable chars, backspace, enter
+      if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
 
-    // Only handle printable chars, backspace, enter
-    if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
+      // Ignore keyboard shortcuts (Ctrl+C, Cmd+V, etc.)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+      e.preventDefault();
 
-    // Start on first keypress
-    if (state === "ready" && e.key !== "Backspace") {
-      setState("typing");
-      setStartedAt(Date.now());
+      const currentTyped = typedRef.current;
+
+      // Start on first keypress
+      if (st === "ready" && e.key !== "Backspace") {
+        setState("typing");
+        setStartedAt(Date.now());
+      }
+
+      // Backspace
+      if (e.key === "Backspace") {
+        setTyped(currentTyped.slice(0, -1));
+        return;
+      }
+
+      const expected = text[currentTyped.length];
+      if (!expected) return;
+
+      const key = e.key === "Enter" ? "\n" : e.key;
+
+      if (key !== expected) {
+        setErrors((n) => n + 1);
+        const id = keyIdFor(expected);
+        setKeyErrors((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
+        return;
+      }
+
+      // Correct!
+      const next = currentTyped + key;
+      setTyped(next);
+      if (next.length === text.length) {
+        setState("done");
+      }
     }
 
-    // Backspace
-    if (e.key === "Backspace") {
-      setTyped((t) => t.slice(0, -1));
-      return;
-    }
-
-    const expected = text[typed.length];
-    if (!expected) return;
-
-    const key = e.key === "Enter" ? "\n" : e.key;
-
-    if (key !== expected) {
-      setErrors((n) => n + 1);
-      const id = keyIdFor(expected);
-      setKeyErrors((m) => ({ ...m, [id]: (m[id] ?? 0) + 1 }));
-      return;
-    }
-
-    // Correct!
-    const next = typed + key;
-    setTyped(next);
-    if (next.length === text.length) {
-      setState("done");
-    }
-  }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [text]); // Only re-bind if text changes
 
   const nextChar = typed.length < text.length ? text[typed.length] : null;
   const highlight = nextChar ? keyIdFor(nextChar) : null;
@@ -105,7 +115,7 @@ export function TypingEngine({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typed.length, errors, startedAt]);
 
-  // Save attempt when done — use refs to avoid stale closures
+  // Save attempt when done
   const levelRef = useRef(level);
   levelRef.current = level;
   const keyErrorsRef = useRef(keyErrors);
@@ -114,7 +124,6 @@ export function TypingEngine({
   useEffect(() => {
     if (state !== "done" || saved) return;
 
-    // Capture stats at this exact moment
     const elapsed = startedAt ? (Date.now() - startedAt) / 1000 : 0;
     const words = typed.length / 5;
     const mpm = elapsed > 0 ? Math.round((words / elapsed) * 60) : 0;
@@ -126,7 +135,7 @@ export function TypingEngine({
     const errs = { ...keyErrorsRef.current };
     const lvl = levelRef.current;
 
-    setSaved(true); // Set immediately to prevent double saves
+    setSaved(true);
 
     void (async () => {
       try {
@@ -145,7 +154,7 @@ export function TypingEngine({
         });
         if (error) {
           console.error("[TypingEngine] Save error:", error.message);
-          setSaved(false); // Allow retry
+          setSaved(false);
         } else {
           console.log("[TypingEngine] ✅ Saved level", lvl, "mpm:", mpm, "acc:", acc);
         }
@@ -154,40 +163,14 @@ export function TypingEngine({
         setSaved(false);
       }
     })();
-    // Only re-run when state transitions to done
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-rule bg-card cursor-text"
-      onClick={focusInput}
+      ref={containerRef}
+      className="overflow-hidden rounded-2xl border border-rule bg-card"
     >
-      {/* Hidden input — all keyboard events go through here */}
-      <input
-        ref={inputRef}
-        type="text"
-        className="sr-only"
-        style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, opacity: 0.01, pointerEvents: 'none' }}
-        autoFocus
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck={false}
-        inputMode="none"
-        onKeyDown={handleKey}
-        onBlur={() => {
-          // Re-focus after a short delay (prevents losing focus)
-          if (state !== "done") {
-            setTimeout(() => {
-              requestAnimationFrame(() => {
-                inputRef.current?.focus({ preventScroll: true });
-              });
-            }, 50);
-          }
-        }}
-      />
-
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-rule bg-paper-deep/60 px-5 py-3 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
         <span>leçon {String(level).padStart(2, "0")}</span>
@@ -204,8 +187,7 @@ export function TypingEngine({
       <div className="relative min-h-[180px]">
         {state === "ready" && (
           <div
-            className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px] cursor-text"
-            onClick={focusInput}
+            className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px]"
           >
             <div className="text-center animate-fade-in px-4">
               <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-copper/15">
