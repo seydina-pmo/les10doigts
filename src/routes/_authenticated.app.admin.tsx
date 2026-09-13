@@ -9,6 +9,7 @@ import {
   rejectSchool,
 } from "@/lib/admin.functions";
 import { replyToMessage, notifySchool } from "@/lib/email.functions";
+import { createPayTechPayment } from "@/lib/paytech.functions";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   head: () => ({ meta: [{ title: "Admin — La Méthode des 10 Doigts" }] }),
@@ -939,8 +940,6 @@ function SchoolSection({ title, color, schools, busy, onActivate, onReject }: {
 
 /* ---------- School Card with full workflow ---------- */
 
-const PAYTECH_SCHOOL_LINK = "https://paytech.sn"; // PayTech mobile money payment for schools
-
 function SchoolCard({
   school: s, busy, onActivate, onReject,
 }: {
@@ -950,6 +949,7 @@ function SchoolCard({
   const [updating, setUpdating] = useState(false);
   const [emailStatus, setEmailStatus] = useState<string | null>(null);
   const notify = useServerFn(notifySchool);
+  const createPayment = useServerFn(createPayTechPayment);
 
   async function updateStatus(newStatus: string) {
     setUpdating(true);
@@ -970,9 +970,29 @@ function SchoolCard({
   async function sendNotification(type: "received" | "studying" | "payment" | "rejected") {
     setEmailStatus("envoi...");
     try {
-      await notify({ data: { to: s.contact_email, schoolName: s.name, contactName: s.contact_name, type, paymentLink: PAYTECH_SCHOOL_LINK } });
-      setEmailStatus("✅ Email envoyé !");
-      setTimeout(() => setEmailStatus(null), 3000);
+      let paymentLink: string | undefined;
+
+      // Génère un vrai lien PayTech pour le paiement école
+      if (type === "payment") {
+        setEmailStatus("Génération du lien de paiement...");
+        const payRes = await createPayment({
+          data: {
+            plan: "ecole",
+            userEmail: s.contact_email,
+            originUrl: window.location.origin,
+          },
+        });
+        if (payRes.success && payRes.redirectUrl) {
+          paymentLink = payRes.redirectUrl;
+        } else {
+          setEmailStatus("❌ Erreur PayTech : " + (payRes.error || "Impossible de générer le lien"));
+          return;
+        }
+      }
+
+      await notify({ data: { to: s.contact_email, schoolName: s.name, contactName: s.contact_name, type, paymentLink } });
+      setEmailStatus("✅ Email envoyé avec lien de paiement !");
+      setTimeout(() => setEmailStatus(null), 4000);
     } catch (e) {
       setEmailStatus("❌ " + (e instanceof Error ? e.message : String(e)));
     }

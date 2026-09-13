@@ -40,6 +40,8 @@ CREATE TABLE public.schools (
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   display_name TEXT,
+  email TEXT,
+  disabled_at TIMESTAMPTZ,
   school_id UUID REFERENCES public.schools(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -113,23 +115,38 @@ BEGIN
 END;
 $$;
 
--- 5. AUTO-CREATE PROFILE ON SIGNUP
+-- 5. AUTO-CREATE PROFILE ON SIGNUP (SUPPORTS GOOGLE OAUTH & EMAIL SIGNUP)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER SET search_path = ''
 AS $$
 BEGIN
-  INSERT INTO public.profiles (id, display_name)
+  INSERT INTO public.profiles (id, display_name, email)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.email)
-  );
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      NEW.raw_user_meta_data->>'display_name',
+      split_part(NEW.email, '@', 1)
+    ),
+    NEW.email
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    display_name = EXCLUDED.display_name,
+    email = EXCLUDED.email;
+
   IF NEW.raw_user_meta_data->>'role' IS NOT NULL THEN
     INSERT INTO public.user_roles (user_id, role)
     VALUES (NEW.id, (NEW.raw_user_meta_data->>'role')::public.app_role)
     ON CONFLICT (user_id, role) DO NOTHING;
+  ELSE
+    INSERT INTO public.user_roles (user_id, role)
+    VALUES (NEW.id, 'particulier'::public.app_role)
+    ON CONFLICT (user_id, role) DO NOTHING;
   END IF;
+
   RETURN NEW;
 END;
 $$;
@@ -144,6 +161,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Super admin can manage all profiles" ON public.profiles FOR ALL USING (EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'super_admin'));
 
 ALTER TABLE public.lesson_attempts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own attempts" ON public.lesson_attempts FOR SELECT USING (auth.uid() = user_id);

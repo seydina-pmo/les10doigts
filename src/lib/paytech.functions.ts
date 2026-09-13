@@ -14,27 +14,27 @@ export const createPayTechPayment = createServerFn({ method: "POST" })
     const apiSecret = process.env.PAYTECH_API_SECRET;
     const env = process.env.PAYTECH_ENV || "test";
 
-    // Prices in EUR (€)
-    // Particulier: 10 €
-    // Ecole: 115 €
+    // Prix en FCFA (PayTech travaille en XOF/FCFA)
+    // Particulier: 6 500 FCFA / mois (~10 €)
+    // École: 75 000 FCFA / an (~115 €)
     const isEcole = data.plan === "ecole";
-    const itemPrice = isEcole ? 115 : 10;
+    const itemPrice = isEcole ? 75000 : 6500;
     const itemName = isEcole 
       ? "Abonnement Les 10 Doigts - Établissement (1 An)" 
       : "Abonnement Les 10 Doigts - Particulier (Mensuel)";
 
-    const origin = data.originUrl || "https://les10doigts.com";
+    const origin = data.originUrl || "https://www.les10doigts.com";
     const refCommand = `L10D_${data.plan.toUpperCase()}_${Date.now()}`;
 
     const body = {
       item_name: itemName,
       item_price: itemPrice.toString(),
-      currency: "EUR",
+      currency: "XOF",
       ref_command: refCommand,
       command_name: `Paiement ${itemName}`,
       env: env,
       ipn_url: `${origin}/api/paytech-ipn`,
-      success_url: `${origin}/app/profile?payment=success`,
+      success_url: `${origin}/app?payment=success`,
       cancel_url: `${origin}/tarifs?payment=cancelled`,
       custom_field: JSON.stringify({
         userId: data.userId || null,
