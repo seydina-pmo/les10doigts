@@ -174,7 +174,7 @@ function CertificationPage() {
                         <td className="py-2">
                           <Link
                             to="/app/train"
-                            search={{ level: w.level }}
+                            search={{ level: w.level, weak: weak.map((ww) => ww.level).join(",") }}
                             className="text-copper-deep underline-offset-4 hover:underline"
                           >
                             Niveau {w.level}
@@ -203,10 +203,10 @@ function CertificationPage() {
               </div>
               <Link
                 to="/app/train"
-                search={{}}
+                search={{ level: weak[0].level, weak: weak.map((ww) => ww.level).join(",") }}
                 className="mt-6 inline-block rounded-md bg-copper px-5 py-2.5 text-sm font-medium text-paper transition hover:-translate-y-0.5 hover:bg-copper-deep"
               >
-                🔁 Reprendre l'entraînement
+                🔁 Retravailler les {weak.length} niveaux
               </Link>
             </div>
           )}

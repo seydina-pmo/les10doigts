@@ -12,24 +12,47 @@ export const Route = createFileRoute("/_authenticated/app/train")({
   head: () => ({ meta: [{ title: "S'entraîner, La Méthode des 10 Doigts" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     level: Number(search.level) || undefined,
+    weak: (typeof search.weak === "string" ? search.weak : undefined) as string | undefined,
   }),
   component: TrainPage,
 });
 
 function TrainPage() {
-  const { level: urlLevel } = Route.useSearch();
+  const { level: urlLevel, weak: weakParam } = Route.useSearch();
   const [level, setLevel] = useState(urlLevel && urlLevel >= 1 && urlLevel <= 100 ? urlLevel : 1);
   const [focusMode, setFocusMode] = useState(false);
   const focusContainerRef = useRef<HTMLDivElement>(null);
   const { subscription } = useSubscription();
   const navigate = useNavigate();
 
+  // Parse weak levels list from URL (e.g. "5,12,23,45")
+  const weakLevels = weakParam
+    ? weakParam.split(",").map(Number).filter((n) => n >= 1 && n <= 100)
+    : [];
+  const isRetrainMode = weakLevels.length > 0;
+
   function goNext() {
-    if (level >= 100) {
+    const exitFocus = () => {
       if (focusMode) {
         setFocusMode(false);
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       }
+    };
+
+    if (isRetrainMode) {
+      // Find the next weak level after the current one
+      const currentIdx = weakLevels.indexOf(level);
+      const nextIdx = currentIdx + 1;
+      if (nextIdx < weakLevels.length) {
+        // Go to next weak level
+        setLevel(weakLevels[nextIdx]);
+      } else {
+        // All weak levels done — go back to certification
+        exitFocus();
+        navigate({ to: "/app/certification" });
+      }
+    } else if (level >= 100) {
+      exitFocus();
       navigate({ to: "/app/certification" });
     } else {
       setLevel((l) => Math.min(100, l + 1));
@@ -169,9 +192,18 @@ function TrainPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-copper-deep">
-            moteur d&apos;exercice
+            {isRetrainMode ? "retravail certification" : "moteur d\u0027exercice"}
           </p>
           <h1 className="mt-2 font-serif text-3xl">{lesson.title}</h1>
+          {isRetrainMode && (
+            <p className="mt-1 text-sm text-ink-soft">
+              🔁 Niveau {weakLevels.indexOf(level) + 1} sur {weakLevels.length} à retravailler
+              {" · "}
+              <a href="/app/certification" className="text-copper-deep underline-offset-4 hover:underline">
+                Retour au bilan
+              </a>
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <VoiceGuide page="train" />
