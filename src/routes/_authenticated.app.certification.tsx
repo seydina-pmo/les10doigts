@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CertificateDownloadButton } from "@/components/Certificate";
 import {
   bestPerLevel,
   progressFor,
@@ -91,6 +92,20 @@ function CertificationPage() {
               </div>
               <Medal tier={tier} />
             </div>
+
+            {/* Download certificate button — only if tier achieved */}
+            {tier && weak.length === 0 && (
+              <div className="mt-6 border-t border-rule/40 pt-5">
+                <CertificateDownloadButton
+                  tier={tier}
+                  userName={name || "Utilisateur"}
+                  avgMpm={avgMpm}
+                  avgAccuracy={avgAcc}
+                  levelsValidated={progressFor(attempts, tier).done}
+                  totalLevels={progressFor(attempts, tier).total}
+                />
+              </div>
+            )}
           </div>
 
           {/* Global stats */}
