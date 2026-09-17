@@ -93,14 +93,14 @@ function CertificationPage() {
               <Medal tier={tier} />
             </div>
 
-            {/* Download certificate button — only if tier achieved AND no weak levels */}
-            {tier && weak.length === 0 && (
+            {/* Download certificate for ACHIEVED tier — always available */}
+            {tier && (
               <div className="mt-6 border-t border-rule/40 pt-5">
                 <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#ecfdf5] px-4 py-3 text-sm text-[#065f46]">
                   <span className="mt-0.5">✅</span>
                   <p>
-                    Félicitations ! Tous les niveaux du <strong>{TIER_LABEL[tier]}</strong> sont validés.
-                    Vous pouvez télécharger votre certificat officiel ci-dessous.
+                    Félicitations ! Vous avez obtenu le niveau <strong>{TIER_LABEL[tier]}</strong>.
+                    Téléchargez votre certificat officiel ci-dessous.
                   </p>
                 </div>
                 <CertificateDownloadButton
@@ -114,14 +114,14 @@ function CertificationPage() {
               </div>
             )}
 
-            {/* Note when certificate NOT yet available */}
-            {tier && weak.length > 0 && (
-              <div className="mt-6 border-t border-rule/40 pt-5">
+            {/* Note about NEXT tier if there are weak levels to retrain */}
+            {tier && tier !== "or" && weak.length > 0 && (
+              <div className="mt-4">
                 <div className="flex items-start gap-2 rounded-lg bg-[#fef2f2] px-4 py-3 text-sm text-[#991b1b]">
                   <span className="mt-0.5">🔒</span>
                   <p>
-                    Votre certificat <strong>{TIER_LABEL[target]}</strong> sera disponible au téléchargement
-                    une fois que vous aurez retravaillé les <strong>{weak.length} niveau{weak.length > 1 ? "x" : ""}</strong> restant{weak.length > 1 ? "s" : ""}.
+                    Pour obtenir le certificat <strong>{TIER_LABEL[target]}</strong>, il vous reste
+                    <strong> {weak.length} niveau{weak.length > 1 ? "x" : ""}</strong> à retravailler.
                     Cliquez sur un niveau dans la liste ci-dessous pour le retravailler.
                   </p>
                 </div>
