@@ -575,6 +575,7 @@ function UsersTab({
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   const roleMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -597,6 +598,17 @@ function UsersTab({
   const lastActivity = useMemo(() => {
     const m: Record<string, string> = {};
     for (const a of attempts) if (!m[a.user_id] || a.created_at > m[a.user_id]) m[a.user_id] = a.created_at;
+    return m;
+  }, [attempts]);
+
+  const userStats = useMemo(() => {
+    const m: Record<string, { maxMpm: number; levels: Set<number> }> = {};
+    for (const a of attempts) {
+      if (!m[a.user_id]) m[a.user_id] = { maxMpm: 0, levels: new Set() };
+      const s = m[a.user_id];
+      if (a.mpm > s.maxMpm) s.maxMpm = a.mpm;
+      s.levels.add(a.level);
+    }
     return m;
   }, [attempts]);
 
@@ -628,7 +640,6 @@ function UsersTab({
     if (!confirm(`Supprimer définitivement ${email || userId} ?\n\nToutes ses données (progression, abonnement, rôle) seront perdues.`)) return;
     setActionBusy(userId);
     try {
-      // Delete in order to respect foreign keys
       await supabase.from("lesson_attempts").delete().eq("user_id", userId);
       await supabase.from("subscriptions").delete().eq("user_id", userId);
       await supabase.from("user_roles").delete().eq("user_id", userId);
@@ -668,82 +679,123 @@ function UsersTab({
         <span className="text-xs text-[#5a7a9a]">{filtered.length} utilisateur(s)</span>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-[#e2e8f0] bg-white">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-[#e2e8f0] bg-[#f8fafc]">
-            <tr>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Nom</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Email</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Rôle</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Niveaux</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Statut</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Inscrit le</th>
-              <th className="px-4 py-3 font-mono text-[10px] uppercase tracking-wider text-[#5a7a9a]">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#f1f5f9]">
-            {filtered.map((p) => {
-              const role = roleMap[p.id] ?? "particulier";
-              const lessons = lessonCount[p.id] ?? 0;
-              const isDisabled = !!p.disabled_at;
-              const isSuperAdmin = role === "super_admin";
-              const busy = actionBusy === p.id;
-              return (
-                <tr key={p.id} className={`hover:bg-[#f8fafc] ${isDisabled ? 'opacity-50' : ''}`}>
-                  <td className="px-4 py-3 font-medium text-[#1e3a5f]">
-                    {p.display_name || (isSuperAdmin ? "Super Admin" : "—")}
-                  </td>
-                  <td className="px-4 py-3 text-[#5a7a9a]">{p.email || "—"}</td>
-                  <td className="px-4 py-3">
-                    <RoleBadge role={role} />
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[#4361ee]">{lessons}</td>
-                  <td className="px-4 py-3">
-                    {isDisabled ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[#d97706]">
-                        ⚠️ Désactivé
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#dcfce7] px-2.5 py-0.5 text-[10px] font-semibold uppercase text-[#16a34a]">
-                        ✓ Actif
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-[#5a7a9a]">
-                    {new Date(p.created_at).toLocaleDateString("fr-FR")}
-                  </td>
-                  <td className="px-4 py-3">
-                    {!isSuperAdmin && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          disabled={busy}
-                          onClick={() => toggleDisable(p.id, isDisabled)}
-                          title={isDisabled ? "Réactiver" : "Désactiver"}
-                          className={`rounded px-2 py-1 text-xs font-medium transition disabled:opacity-40 ${
-                            isDisabled
-                              ? 'bg-[#dcfce7] text-[#16a34a] hover:bg-[#bbf7d0]'
-                              : 'bg-[#fef3c7] text-[#d97706] hover:bg-[#fde68a]'
-                          }`}
-                        >
-                          {busy ? '…' : isDisabled ? '✅ Réactiver' : '⏸ Désactiver'}
-                        </button>
-                        <button
-                          disabled={busy}
-                          onClick={() => hardDelete(p.id, p.email)}
-                          title="Supprimer définitivement"
-                          className="rounded px-2 py-1 text-xs font-medium bg-[#fee2e2] text-[#dc2626] hover:bg-[#fecaca] transition disabled:opacity-40"
-                        >
-                          {busy ? '…' : '🗑 Supprimer'}
-                        </button>
+      {/* User cards */}
+      <div className="space-y-2">
+        {filtered.map((p) => {
+          const role = roleMap[p.id] ?? "particulier";
+          const lessons = lessonCount[p.id] ?? 0;
+          const isDisabled = !!p.disabled_at;
+          const isSuperAdmin = role === "super_admin";
+          const busy = actionBusy === p.id;
+          const isOpen = expanded === p.id;
+          const sub = subMap[p.id];
+          const last = lastActivity[p.id];
+          const stats = userStats[p.id];
+
+          return (
+            <div key={p.id} className={"rounded-xl border bg-white transition-all " + (isOpen ? "border-[#4361ee] shadow-md" : "border-[#e2e8f0] hover:border-[#c7d2fe]") + (isDisabled ? " opacity-60" : "")}>
+              {/* Summary row */}
+              <button
+                onClick={() => setExpanded(isOpen ? null : p.id)}
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+              >
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-[#f1f5f9] font-serif text-lg text-[#4361ee]">
+                    {(p.display_name || p.email || "?")[0].toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-[#1e3a5f] truncate">
+                      {p.display_name || (isSuperAdmin ? "Super Admin" : "Utilisateur sans nom")}
+                    </p>
+                    <p className="text-xs text-[#5a7a9a] truncate">{p.email || "—"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <RoleBadge role={role} />
+                  <span className="hidden sm:inline font-mono text-xs text-[#4361ee]">{lessons} niv.</span>
+                  {isDisabled && (
+                    <span className="rounded-full bg-[#fef3c7] px-2 py-0.5 text-[9px] font-bold uppercase text-[#d97706]">désactivé</span>
+                  )}
+                  <span className={"text-[#5a7a9a] transition-transform duration-200 " + (isOpen ? "rotate-180" : "")}>▾</span>
+                </div>
+              </button>
+
+              {/* Expanded detail */}
+              {isOpen && (
+                <div className="border-t border-[#f1f5f9] px-5 py-5 animate-fade-in">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {p.email && (
+                      <div className="rounded-lg bg-[#f8fafc] p-3">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Email</p>
+                        <a href={`mailto:${p.email}`} className="mt-1 block text-sm font-medium text-[#4361ee] hover:underline truncate">{p.email}</a>
                       </div>
                     )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Inscrit le</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{new Date(p.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</p>
+                    </div>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Dernière activité</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{last ? new Date(last).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "Aucune"}</p>
+                    </div>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Niveaux uniques</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{stats ? `${stats.levels.size} / 100` : "0 / 100"}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Meilleure vitesse</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{stats ? `${stats.maxMpm} MPM` : "—"}</p>
+                    </div>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Tentatives</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{lessons}</p>
+                    </div>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Abonnement</p>
+                      <p className={"mt-1 text-sm font-medium " + (sub?.status === "active" ? "text-[#10b981]" : "text-[#5a7a9a]")}>
+                        {sub ? `${sub.plan} (${sub.status})` : "Gratuit"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-[#f8fafc] p-3">
+                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Rôle</p>
+                      <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{role}</p>
+                    </div>
+                  </div>
+
+                  {!isSuperAdmin && (
+                    <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-[#f1f5f9]">
+                      {p.email && (
+                        <a href={`mailto:${p.email}`} className="rounded-md border border-[#e2e8f0] px-3 py-1.5 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition">
+                          ✉️ Envoyer un email
+                        </a>
+                      )}
+                      <button
+                        disabled={busy}
+                        onClick={() => toggleDisable(p.id, isDisabled)}
+                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                          isDisabled
+                            ? 'bg-[#dcfce7] text-[#16a34a] hover:bg-[#bbf7d0]'
+                            : 'bg-[#fef3c7] text-[#d97706] hover:bg-[#fde68a]'
+                        }`}
+                      >
+                        {busy ? '…' : isDisabled ? '✅ Réactiver' : '⏸ Désactiver'}
+                      </button>
+                      <button
+                        disabled={busy}
+                        onClick={() => hardDelete(p.id, p.email)}
+                        className="rounded-md px-3 py-1.5 text-xs font-medium bg-[#fee2e2] text-[#dc2626] hover:bg-[#fecaca] transition disabled:opacity-40"
+                      >
+                        {busy ? '…' : '🗑 Supprimer'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-[#5a7a9a]">Aucun utilisateur trouvé</p>
         )}
@@ -751,6 +803,8 @@ function UsersTab({
     </div>
   );
 }
+
+
 
 /* ================================================== */
 /*  TAB 3 — SUBSCRIPTIONS                             */

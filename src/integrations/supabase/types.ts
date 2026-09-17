@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       class_members: {
@@ -78,13 +103,43 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          replied_at: string | null
+          reply_text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          replied_at?: string | null
+          reply_text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          replied_at?: string | null
+          reply_text?: string | null
+        }
+        Relationships: []
+      }
       lesson_attempts: {
         Row: {
           accuracy: number
           created_at: string
           duration_ms: number
           id: string
-          key_errors: Json
+          key_errors: Json | null
           level: number
           mpm: number
           user_id: string
@@ -94,7 +149,7 @@ export type Database = {
           created_at?: string
           duration_ms: number
           id?: string
-          key_errors?: Json
+          key_errors?: Json | null
           level: number
           mpm: number
           user_id: string
@@ -104,7 +159,7 @@ export type Database = {
           created_at?: string
           duration_ms?: number
           id?: string
-          key_errors?: Json
+          key_errors?: Json | null
           level?: number
           mpm?: number
           user_id?: string
@@ -114,19 +169,25 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          disabled_at: string | null
           display_name: string | null
+          email: string | null
           id: string
           school_id: string | null
         }
         Insert: {
           created_at?: string
+          disabled_at?: string | null
           display_name?: string | null
+          email?: string | null
           id: string
           school_id?: string | null
         }
         Update: {
           created_at?: string
+          disabled_at?: string | null
           display_name?: string | null
+          email?: string | null
           id?: string
           school_id?: string | null
         }
@@ -144,6 +205,8 @@ export type Database = {
         Row: {
           activated_at: string | null
           address: string | null
+          admin_credentials_email: string | null
+          admin_credentials_password: string | null
           admin_user_id: string | null
           billing_cycle: string
           contact_email: string
@@ -156,6 +219,8 @@ export type Database = {
           name: string
           nb_classes: number
           nb_students: number
+          notes: string | null
+          payment_link_sent_at: string | null
           status: string
           updated_at: string
           upgrade_message: string | null
@@ -164,6 +229,8 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           address?: string | null
+          admin_credentials_email?: string | null
+          admin_credentials_password?: string | null
           admin_user_id?: string | null
           billing_cycle?: string
           contact_email: string
@@ -176,6 +243,8 @@ export type Database = {
           name: string
           nb_classes?: number
           nb_students?: number
+          notes?: string | null
+          payment_link_sent_at?: string | null
           status?: string
           updated_at?: string
           upgrade_message?: string | null
@@ -184,6 +253,8 @@ export type Database = {
         Update: {
           activated_at?: string | null
           address?: string | null
+          admin_credentials_email?: string | null
+          admin_credentials_password?: string | null
           admin_user_id?: string | null
           billing_cycle?: string
           contact_email?: string
@@ -196,10 +267,45 @@ export type Database = {
           name?: string
           nb_classes?: number
           nb_students?: number
+          notes?: string | null
+          payment_link_sent_at?: string | null
           status?: string
           updated_at?: string
           upgrade_message?: string | null
           upgrade_requested_at?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          plan: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -229,6 +335,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_super_admin: { Args: never; Returns: boolean }
       join_class_by_code: { Args: { _code: string }; Returns: string }
     }
     Enums: {
@@ -253,12 +360,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -282,11 +389,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -307,11 +414,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -332,11 +439,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -349,11 +456,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -363,6 +470,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: [

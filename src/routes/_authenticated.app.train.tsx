@@ -10,11 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/train")({
   head: () => ({ meta: [{ title: "S'entraîner, La Méthode des 10 Doigts" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    level: Number(search.level) || undefined,
+  }),
   component: TrainPage,
 });
 
 function TrainPage() {
-  const [level, setLevel] = useState(1);
+  const { level: urlLevel } = Route.useSearch();
+  const [level, setLevel] = useState(urlLevel && urlLevel >= 1 && urlLevel <= 100 ? urlLevel : 1);
   const [focusMode, setFocusMode] = useState(false);
   const focusContainerRef = useRef<HTMLDivElement>(null);
   const { subscription } = useSubscription();
@@ -22,7 +26,6 @@ function TrainPage() {
 
   function goNext() {
     if (level >= 100) {
-      // Finished all 100 levels — go to certification bilan
       if (focusMode) {
         setFocusMode(false);
         if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -33,8 +36,9 @@ function TrainPage() {
     }
   }
 
-  // Resume at the highest level already attempted.
+  // Resume at the highest level already attempted, but only if no URL level was specified
   useEffect(() => {
+    if (urlLevel) return; // URL param takes priority
     void (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
@@ -47,10 +51,10 @@ function TrainPage() {
           .limit(1);
         if (data && data[0]) setLevel(Math.min(100, (data[0].level as number) + 1));
       } catch {
-        // Silently fail — just start at level 1
+        // Silently fail
       }
     })();
-  }, []);
+  }, [urlLevel]);
 
   // Toggle focus mode + fullscreen
   const toggleFocus = useCallback(() => {

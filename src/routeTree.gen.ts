@@ -9,55 +9,46 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TarifsRouteImport } from './routes/tarifs'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ParticuliersRouteImport } from './routes/particuliers'
-import { Route as MethodeRouteImport } from './routes/methode'
-import { Route as GuideRouteImport } from './routes/guide'
-import { Route as EcolesRouteImport } from './routes/ecoles'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthIndexRouteImport } from './routes/auth.index'
-import { Route as BlogTempsApprentissageRouteImport } from './routes/blog.temps-apprentissage'
-import { Route as AuthEcoleRouteImport } from './routes/auth.ecole'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ConditionsRouteImport } from './routes/conditions'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as EcolesRouteImport } from './routes/ecoles'
+import { Route as GuideRouteImport } from './routes/guide'
+import { Route as MethodeRouteImport } from './routes/methode'
+import { Route as ParticuliersRouteImport } from './routes/particuliers'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
+import { Route as AuthIndexRouteImport } from './routes/auth.index'
+import { Route as AuthEcoleRouteImport } from './routes/auth.ecole'
+import { Route as BlogTempsApprentissageRouteImport } from './routes/blog.temps-apprentissage'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated.app.index'
-import { Route as AuthenticatedAppTrainRouteImport } from './routes/_authenticated.app.train'
-import { Route as AuthenticatedAppExamRouteImport } from './routes/_authenticated.app.exam'
-import { Route as AuthenticatedAppEcoleRouteImport } from './routes/_authenticated.app.ecole'
-import { Route as AuthenticatedAppClassesRouteImport } from './routes/_authenticated.app.classes'
-import { Route as AuthenticatedAppCertificationRouteImport } from './routes/_authenticated.app.certification'
 import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated.app.admin'
+import { Route as AuthenticatedAppCertificationRouteImport } from './routes/_authenticated.app.certification'
+import { Route as AuthenticatedAppClassesRouteImport } from './routes/_authenticated.app.classes'
+import { Route as AuthenticatedAppEcoleRouteImport } from './routes/_authenticated.app.ecole'
+import { Route as AuthenticatedAppExamRouteImport } from './routes/_authenticated.app.exam'
+import { Route as AuthenticatedAppTrainRouteImport } from './routes/_authenticated.app.train'
 
-const TarifsRoute = TarifsRouteImport.update({
-  id: '/tarifs',
-  path: '/tarifs',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ParticuliersRoute = ParticuliersRouteImport.update({
-  id: '/particuliers',
-  path: '/particuliers',
+const ConditionsRoute = ConditionsRouteImport.update({
+  id: '/conditions',
+  path: '/conditions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MethodeRoute = MethodeRouteImport.update({
-  id: '/methode',
-  path: '/methode',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuideRoute = GuideRouteImport.update({
-  id: '/guide',
-  path: '/guide',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EcolesRoute = EcolesRouteImport.update({
-  id: '/ecoles',
-  path: '/ecoles',
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -65,28 +56,34 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const EcolesRoute = EcolesRouteImport.update({
+  id: '/ecoles',
+  path: '/ecoles',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const GuideRoute = GuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: '/auth/',
-  path: '/auth/',
+const MethodeRoute = MethodeRouteImport.update({
+  id: '/methode',
+  path: '/methode',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogTempsApprentissageRoute = BlogTempsApprentissageRouteImport.update({
-  id: '/blog/temps-apprentissage',
-  path: '/blog/temps-apprentissage',
+const ParticuliersRoute = ParticuliersRouteImport.update({
+  id: '/particuliers',
+  path: '/particuliers',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthEcoleRoute = AuthEcoleRouteImport.update({
-  id: '/auth/ecole',
-  path: '/auth/ecole',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -94,29 +91,29 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthEcoleRoute = AuthEcoleRouteImport.update({
+  id: '/auth/ecole',
+  path: '/auth/ecole',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogTempsApprentissageRoute = BlogTempsApprentissageRouteImport.update({
+  id: '/blog/temps-apprentissage',
+  path: '/blog/temps-apprentissage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedAppTrainRoute = AuthenticatedAppTrainRouteImport.update({
-  id: '/train',
-  path: '/train',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppExamRoute = AuthenticatedAppExamRouteImport.update({
-  id: '/exam',
-  path: '/exam',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppEcoleRoute = AuthenticatedAppEcoleRouteImport.update({
-  id: '/ecole',
-  path: '/ecole',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppClassesRoute = AuthenticatedAppClassesRouteImport.update({
-  id: '/classes',
-  path: '/classes',
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppCertificationRoute =
@@ -125,14 +122,31 @@ const AuthenticatedAppCertificationRoute =
     path: '/certification',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedAppClassesRoute = AuthenticatedAppClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppEcoleRoute = AuthenticatedAppEcoleRouteImport.update({
+  id: '/ecole',
+  path: '/ecole',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppExamRoute = AuthenticatedAppExamRouteImport.update({
+  id: '/exam',
+  path: '/exam',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppTrainRoute = AuthenticatedAppTrainRouteImport.update({
+  id: '/train',
+  path: '/train',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
@@ -154,6 +168,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
@@ -176,6 +192,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
@@ -199,6 +217,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/conditions'
+    | '/confidentialite'
     | '/contact'
     | '/ecoles'
     | '/guide'
@@ -220,6 +240,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/conditions'
+    | '/confidentialite'
     | '/contact'
     | '/ecoles'
     | '/guide'
@@ -241,6 +263,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/conditions'
+    | '/confidentialite'
     | '/contact'
     | '/ecoles'
     | '/guide'
@@ -264,6 +288,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ConditionsRoute: typeof ConditionsRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
   ContactRoute: typeof ContactRoute
   EcolesRoute: typeof EcolesRoute
   GuideRoute: typeof GuideRoute
@@ -278,53 +304,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tarifs': {
-      id: '/tarifs'
-      path: '/tarifs'
-      fullPath: '/tarifs'
-      preLoaderRoute: typeof TarifsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/particuliers': {
-      id: '/particuliers'
-      path: '/particuliers'
-      fullPath: '/particuliers'
-      preLoaderRoute: typeof ParticuliersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/methode': {
-      id: '/methode'
-      path: '/methode'
-      fullPath: '/methode'
-      preLoaderRoute: typeof MethodeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guide': {
-      id: '/guide'
-      path: '/guide'
-      fullPath: '/guide'
-      preLoaderRoute: typeof GuideRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ecoles': {
-      id: '/ecoles'
-      path: '/ecoles'
-      fullPath: '/ecoles'
-      preLoaderRoute: typeof EcolesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -334,32 +318,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/conditions': {
+      id: '/conditions'
+      path: '/conditions'
+      fullPath: '/conditions'
+      preLoaderRoute: typeof ConditionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/': {
-      id: '/auth/'
-      path: '/auth'
-      fullPath: '/auth/'
-      preLoaderRoute: typeof AuthIndexRouteImport
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/temps-apprentissage': {
-      id: '/blog/temps-apprentissage'
-      path: '/blog/temps-apprentissage'
-      fullPath: '/blog/temps-apprentissage'
-      preLoaderRoute: typeof BlogTempsApprentissageRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/ecole': {
-      id: '/auth/ecole'
-      path: '/auth/ecole'
-      fullPath: '/auth/ecole'
-      preLoaderRoute: typeof AuthEcoleRouteImport
+    '/ecoles': {
+      id: '/ecoles'
+      path: '/ecoles'
+      fullPath: '/ecoles'
+      preLoaderRoute: typeof EcolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guide': {
+      id: '/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/methode': {
+      id: '/methode'
+      path: '/methode'
+      fullPath: '/methode'
+      preLoaderRoute: typeof MethodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/particuliers': {
+      id: '/particuliers'
+      path: '/particuliers'
+      fullPath: '/particuliers'
+      preLoaderRoute: typeof ParticuliersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -369,6 +388,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/ecole': {
+      id: '/auth/ecole'
+      path: '/auth/ecole'
+      fullPath: '/auth/ecole'
+      preLoaderRoute: typeof AuthEcoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/temps-apprentissage': {
+      id: '/blog/temps-apprentissage'
+      path: '/blog/temps-apprentissage'
+      fullPath: '/blog/temps-apprentissage'
+      preLoaderRoute: typeof BlogTempsApprentissageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app/': {
       id: '/_authenticated/app/'
       path: '/'
@@ -376,32 +416,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/train': {
-      id: '/_authenticated/app/train'
-      path: '/train'
-      fullPath: '/app/train'
-      preLoaderRoute: typeof AuthenticatedAppTrainRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/exam': {
-      id: '/_authenticated/app/exam'
-      path: '/exam'
-      fullPath: '/app/exam'
-      preLoaderRoute: typeof AuthenticatedAppExamRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/ecole': {
-      id: '/_authenticated/app/ecole'
-      path: '/ecole'
-      fullPath: '/app/ecole'
-      preLoaderRoute: typeof AuthenticatedAppEcoleRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/classes': {
-      id: '/_authenticated/app/classes'
-      path: '/classes'
-      fullPath: '/app/classes'
-      preLoaderRoute: typeof AuthenticatedAppClassesRouteImport
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/certification': {
@@ -411,11 +430,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCertificationRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/app/admin': {
-      id: '/_authenticated/app/admin'
-      path: '/admin'
-      fullPath: '/app/admin'
-      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+    '/_authenticated/app/classes': {
+      id: '/_authenticated/app/classes'
+      path: '/classes'
+      fullPath: '/app/classes'
+      preLoaderRoute: typeof AuthenticatedAppClassesRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/ecole': {
+      id: '/_authenticated/app/ecole'
+      path: '/ecole'
+      fullPath: '/app/ecole'
+      preLoaderRoute: typeof AuthenticatedAppEcoleRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/exam': {
+      id: '/_authenticated/app/exam'
+      path: '/exam'
+      fullPath: '/app/exam'
+      preLoaderRoute: typeof AuthenticatedAppExamRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/train': {
+      id: '/_authenticated/app/train'
+      path: '/train'
+      fullPath: '/app/train'
+      preLoaderRoute: typeof AuthenticatedAppTrainRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
   }
@@ -459,6 +499,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ConditionsRoute: ConditionsRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
   ContactRoute: ContactRoute,
   EcolesRoute: EcolesRoute,
   GuideRoute: GuideRoute,
