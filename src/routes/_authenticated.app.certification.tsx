@@ -93,9 +93,16 @@ function CertificationPage() {
               <Medal tier={tier} />
             </div>
 
-            {/* Download certificate button — only if tier achieved */}
+            {/* Download certificate button — only if tier achieved AND no weak levels */}
             {tier && weak.length === 0 && (
               <div className="mt-6 border-t border-rule/40 pt-5">
+                <div className="mb-3 flex items-start gap-2 rounded-lg bg-[#ecfdf5] px-4 py-3 text-sm text-[#065f46]">
+                  <span className="mt-0.5">✅</span>
+                  <p>
+                    Félicitations ! Tous les niveaux du <strong>{TIER_LABEL[tier]}</strong> sont validés.
+                    Vous pouvez télécharger votre certificat officiel ci-dessous.
+                  </p>
+                </div>
                 <CertificateDownloadButton
                   tier={tier}
                   userName={name || "Utilisateur"}
@@ -104,6 +111,20 @@ function CertificationPage() {
                   levelsValidated={progressFor(attempts, tier).done}
                   totalLevels={progressFor(attempts, tier).total}
                 />
+              </div>
+            )}
+
+            {/* Note when certificate NOT yet available */}
+            {tier && weak.length > 0 && (
+              <div className="mt-6 border-t border-rule/40 pt-5">
+                <div className="flex items-start gap-2 rounded-lg bg-[#fef2f2] px-4 py-3 text-sm text-[#991b1b]">
+                  <span className="mt-0.5">🔒</span>
+                  <p>
+                    Votre certificat <strong>{TIER_LABEL[target]}</strong> sera disponible au téléchargement
+                    une fois que vous aurez retravaillé les <strong>{weak.length} niveau{weak.length > 1 ? "x" : ""}</strong> restant{weak.length > 1 ? "s" : ""}.
+                    Cliquez sur un niveau dans la liste ci-dessous pour le retravailler.
+                  </p>
+                </div>
               </div>
             )}
           </div>
