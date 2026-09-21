@@ -30,6 +30,8 @@ import { Route as AuthenticatedAppCertificationRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppClassesRouteImport } from './routes/_authenticated.app.classes'
 import { Route as AuthenticatedAppEcoleRouteImport } from './routes/_authenticated.app.ecole'
 import { Route as AuthenticatedAppExamRouteImport } from './routes/_authenticated.app.exam'
+import { Route as AuthenticatedAppLeaderboardRouteImport } from './routes/_authenticated.app.leaderboard'
+import { Route as AuthenticatedAppSubscriptionRouteImport } from './routes/_authenticated.app.subscription'
 import { Route as AuthenticatedAppTrainRouteImport } from './routes/_authenticated.app.train'
 
 const IndexRoute = IndexRouteImport.update({
@@ -137,6 +139,18 @@ const AuthenticatedAppExamRoute = AuthenticatedAppExamRouteImport.update({
   path: '/exam',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppLeaderboardRoute =
+  AuthenticatedAppLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppSubscriptionRoute =
+  AuthenticatedAppSubscriptionRouteImport.update({
+    id: '/subscription',
+    path: '/subscription',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppTrainRoute = AuthenticatedAppTrainRouteImport.update({
   id: '/train',
   path: '/train',
@@ -163,6 +177,8 @@ export interface FileRoutesByFullPath {
   '/app/classes': typeof AuthenticatedAppClassesRoute
   '/app/ecole': typeof AuthenticatedAppEcoleRoute
   '/app/exam': typeof AuthenticatedAppExamRoute
+  '/app/leaderboard': typeof AuthenticatedAppLeaderboardRoute
+  '/app/subscription': typeof AuthenticatedAppSubscriptionRoute
   '/app/train': typeof AuthenticatedAppTrainRoute
   '/app/': typeof AuthenticatedAppIndexRoute
 }
@@ -185,6 +201,8 @@ export interface FileRoutesByTo {
   '/app/classes': typeof AuthenticatedAppClassesRoute
   '/app/ecole': typeof AuthenticatedAppEcoleRoute
   '/app/exam': typeof AuthenticatedAppExamRoute
+  '/app/leaderboard': typeof AuthenticatedAppLeaderboardRoute
+  '/app/subscription': typeof AuthenticatedAppSubscriptionRoute
   '/app/train': typeof AuthenticatedAppTrainRoute
   '/app': typeof AuthenticatedAppIndexRoute
 }
@@ -210,6 +228,8 @@ export interface FileRoutesById {
   '/_authenticated/app/classes': typeof AuthenticatedAppClassesRoute
   '/_authenticated/app/ecole': typeof AuthenticatedAppEcoleRoute
   '/_authenticated/app/exam': typeof AuthenticatedAppExamRoute
+  '/_authenticated/app/leaderboard': typeof AuthenticatedAppLeaderboardRoute
+  '/_authenticated/app/subscription': typeof AuthenticatedAppSubscriptionRoute
   '/_authenticated/app/train': typeof AuthenticatedAppTrainRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
@@ -235,6 +255,8 @@ export interface FileRouteTypes {
     | '/app/classes'
     | '/app/ecole'
     | '/app/exam'
+    | '/app/leaderboard'
+    | '/app/subscription'
     | '/app/train'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
@@ -257,6 +279,8 @@ export interface FileRouteTypes {
     | '/app/classes'
     | '/app/ecole'
     | '/app/exam'
+    | '/app/leaderboard'
+    | '/app/subscription'
     | '/app/train'
     | '/app'
   id:
@@ -281,6 +305,8 @@ export interface FileRouteTypes {
     | '/_authenticated/app/classes'
     | '/_authenticated/app/ecole'
     | '/_authenticated/app/exam'
+    | '/_authenticated/app/leaderboard'
+    | '/_authenticated/app/subscription'
     | '/_authenticated/app/train'
     | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
@@ -451,6 +477,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppExamRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/leaderboard': {
+      id: '/_authenticated/app/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/app/leaderboard'
+      preLoaderRoute: typeof AuthenticatedAppLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/subscription': {
+      id: '/_authenticated/app/subscription'
+      path: '/subscription'
+      fullPath: '/app/subscription'
+      preLoaderRoute: typeof AuthenticatedAppSubscriptionRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/train': {
       id: '/_authenticated/app/train'
       path: '/train'
@@ -467,6 +507,8 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppClassesRoute: typeof AuthenticatedAppClassesRoute
   AuthenticatedAppEcoleRoute: typeof AuthenticatedAppEcoleRoute
   AuthenticatedAppExamRoute: typeof AuthenticatedAppExamRoute
+  AuthenticatedAppLeaderboardRoute: typeof AuthenticatedAppLeaderboardRoute
+  AuthenticatedAppSubscriptionRoute: typeof AuthenticatedAppSubscriptionRoute
   AuthenticatedAppTrainRoute: typeof AuthenticatedAppTrainRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
@@ -477,6 +519,8 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppClassesRoute: AuthenticatedAppClassesRoute,
   AuthenticatedAppEcoleRoute: AuthenticatedAppEcoleRoute,
   AuthenticatedAppExamRoute: AuthenticatedAppExamRoute,
+  AuthenticatedAppLeaderboardRoute: AuthenticatedAppLeaderboardRoute,
+  AuthenticatedAppSubscriptionRoute: AuthenticatedAppSubscriptionRoute,
   AuthenticatedAppTrainRoute: AuthenticatedAppTrainRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }

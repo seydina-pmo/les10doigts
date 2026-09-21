@@ -40,6 +40,8 @@ function AppShell() {
     { to: "/app/classes", label: role === "formateur" ? "Mes classes" : "Ma classe", show: role === "formateur" || role === "eleve" },
     { to: "/app/certification", label: "Certification", show: role !== "admin_ecole" },
     { to: "/app/exam", label: "Examen", show: role !== "admin_ecole" },
+    { to: "/app/leaderboard", label: "Classement", show: role !== "admin_ecole" },
+    { to: "/app/subscription", label: "Mon abonnement", show: role !== "admin_ecole" && role !== "super_admin" },
     { to: "/app/ecole", label: "Mon école", show: role === "admin_ecole" },
     { to: "/app/admin", label: "Admin", show: role === "super_admin" },
   ].filter((t) => t.show);

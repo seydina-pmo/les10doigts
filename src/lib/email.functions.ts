@@ -92,3 +92,92 @@ export const notifySchool = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+// ---------- Welcome email ----------
+
+export const sendWelcomeEmail = createServerFn({ method: "POST" })
+  .validator((d: { email: string; name: string }) => d)
+  .handler(async ({ data }) => {
+    const resend = await getResend();
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: "contact@les10doigts.com",
+      to: data.email,
+      subject: "Bienvenue sur La Méthode des 10 Doigts ! 🎹",
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <h1 style="color: #1a1a2e; font-size: 28px;">Bienvenue, ${data.name} ! 🎉</h1>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Félicitations pour votre inscription sur <strong>La Méthode des 10 Doigts</strong>.
+          </p>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Vous êtes sur le point de maîtriser le clavier comme un professionnel. Voici ce qui vous attend :
+          </p>
+          <ul style="color: #555; font-size: 15px; line-height: 1.8;">
+            <li>🥉 <strong>100 niveaux</strong> d'exercices progressifs</li>
+            <li>📜 <strong>3 certificats</strong> à obtenir (Bronze, Argent, Or)</li>
+            <li>🏆 Un <strong>classement</strong> pour vous motiver</li>
+          </ul>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Commencez dès maintenant en vous connectant :
+          </p>
+          <a href="https://www.les10doigts.com/auth" style="display: inline-block; background: #a0714f; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Commencer l'entraînement →</a>
+          <p style="color: #999; font-size: 13px; margin-top: 30px;">
+            L'équipe La Méthode des 10 Doigts<br/>
+            <a href="https://www.les10doigts.com" style="color: #a0714f;">www.les10doigts.com</a>
+          </p>
+        </div>
+      `,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+// ---------- Payment confirmation email ----------
+
+export const sendPaymentConfirmation = createServerFn({ method: "POST" })
+  .validator((d: { email: string; name: string; plan: string; amount: string }) => d)
+  .handler(async ({ data }) => {
+    const resend = await getResend();
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: "contact@les10doigts.com",
+      to: data.email,
+      subject: "Confirmation de paiement — La Méthode des 10 Doigts ✅",
+      html: `
+        <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+          <h1 style="color: #1a1a2e; font-size: 28px;">Paiement confirmé ! ✅</h1>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Bonjour ${data.name},
+          </p>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Nous confirmons la réception de votre paiement :
+          </p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px 0; color: #888;">Plan</td>
+              <td style="padding: 10px 0; text-align: right; font-weight: bold;">${data.plan}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px 0; color: #888;">Montant</td>
+              <td style="padding: 10px 0; text-align: right; font-weight: bold;">${data.amount}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; color: #888;">Date</td>
+              <td style="padding: 10px 0; text-align: right; font-weight: bold;">${new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</td>
+            </tr>
+          </table>
+          <p style="color: #555; font-size: 16px; line-height: 1.6;">
+            Votre abonnement est maintenant actif. Tous les 100 niveaux sont débloqués !
+          </p>
+          <a href="https://www.les10doigts.com/app" style="display: inline-block; background: #a0714f; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Accéder à mon espace →</a>
+          <p style="color: #999; font-size: 13px; margin-top: 30px;">
+            L'équipe La Méthode des 10 Doigts<br/>
+            <a href="https://www.les10doigts.com" style="color: #a0714f;">www.les10doigts.com</a>
+          </p>
+        </div>
+      `,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

@@ -22,7 +22,12 @@ export function TypingEngine({
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [state, setState] = useState<EngineState>("ready");
   const [saved, setSaved] = useState(false);
+  const [ghostIndex, setGhostIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Determine target MPM for ghost cursor based on level
+  const targetMPM = level <= 30 ? 0 : level <= 70 ? 40 : 55;
+  const hasGhost = targetMPM > 0;
 
   // Use refs to always have fresh values in the global keydown handler
   const typedRef = useRef(typed);
@@ -42,7 +47,21 @@ export function TypingEngine({
     setStartedAt(null);
     setState("ready");
     setSaved(false);
+    setGhostIndex(0);
   }, [level]);
+
+  // Ghost cursor interval — advances at targetMPM pace
+  useEffect(() => {
+    if (!hasGhost || state !== "typing" || !startedAt) return;
+    // chars per ms = (targetMPM * 5) / 60000
+    const charsPerMs = (targetMPM * 5) / 60000;
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startedAt;
+      const expectedChars = Math.floor(elapsed * charsPerMs);
+      setGhostIndex(Math.min(expectedChars, text.length));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [hasGhost, state, startedAt, targetMPM, text.length]);
 
   // Global keydown handler — captures ALL keyboard input on the page
   useEffect(() => {
@@ -173,7 +192,13 @@ export function TypingEngine({
     >
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-rule bg-paper-deep/60 px-5 py-3 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-        <span>leçon {String(level).padStart(2, "0")}</span>
+        <span>leçon {String(level).padStart(2, "0")}
+          {hasGhost && (
+            <span className="ml-2 text-[10px] normal-case tracking-normal">
+              (guide: {targetMPM} MPM)
+            </span>
+          )}
+        </span>
         <span>
           {state === "ready" ? (
             <span className="animate-pulse text-copper">en attente…</span>
@@ -182,6 +207,22 @@ export function TypingEngine({
           )}
         </span>
       </div>
+
+      {/* Ghost pace bar */}
+      {hasGhost && state === "typing" && (
+        <div className="relative h-1.5 bg-paper-deep">
+          {/* Ghost progress */}
+          <div
+            className="absolute inset-y-0 left-0 bg-destructive/30 transition-all duration-200"
+            style={{ width: `${(ghostIndex / text.length) * 100}%` }}
+          />
+          {/* User progress */}
+          <div
+            className="absolute inset-y-0 left-0 bg-copper transition-all duration-200"
+            style={{ width: `${(typed.length / text.length) * 100}%` }}
+          />
+        </div>
+      )}
 
       {/* Ready overlay + Text area */}
       <div className="relative min-h-[180px]">
@@ -219,7 +260,9 @@ export function TypingEngine({
                   : "ko"
                 : i === typed.length
                   ? "cur"
-                  : "future";
+                  : hasGhost && i < ghostIndex
+                    ? "ghost" // behind ghost but not typed = user is behind
+                    : "future";
             return (
               <span
                 key={i}
@@ -230,7 +273,11 @@ export function TypingEngine({
                       ? "rounded-sm bg-destructive/20 text-destructive"
                       : s === "cur"
                         ? "rounded-sm bg-copper/30 text-foreground"
-                        : "text-ink-soft/60"
+                        : s === "ghost"
+                          ? level > 70
+                            ? "rounded-sm bg-destructive/10 text-destructive/70"
+                            : "rounded-sm bg-amber-100 text-amber-600/80"
+                          : "text-ink-soft/60"
                 }
               >
                 {c === " " ? "\u00A0" : c}
