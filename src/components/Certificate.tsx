@@ -237,11 +237,26 @@ export function CertificateDownloadButton({
       ctx.font = "bold 12px 'Helvetica Neue', Arial, sans-serif";
       ctx.fillText("AUTHENTIQUE", cx, bottomY + 30);
 
-      // Signature (right) — load real signature image
-      const sigImg = await loadImage("/signature-dg.png");
+      // Signature (right) — load real signature image and remove white bg
+      const sigImg = await loadImage("/signature-dg.jpeg");
       const sigW = 280;
       const sigH = (sigImg.height / sigImg.width) * sigW;
-      ctx.drawImage(sigImg, W - 350 - sigW / 2, bottomY - sigH - 10, sigW, sigH);
+      // Remove white background by making white pixels transparent
+      const tmpCanvas = document.createElement("canvas");
+      tmpCanvas.width = sigImg.width;
+      tmpCanvas.height = sigImg.height;
+      const tmpCtx = tmpCanvas.getContext("2d")!;
+      tmpCtx.drawImage(sigImg, 0, 0);
+      const imgData = tmpCtx.getImageData(0, 0, tmpCanvas.width, tmpCanvas.height);
+      const d = imgData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        // If pixel is near-white (R>220, G>220, B>220), make transparent
+        if (d[i] > 220 && d[i + 1] > 220 && d[i + 2] > 220) {
+          d[i + 3] = 0; // set alpha to 0
+        }
+      }
+      tmpCtx.putImageData(imgData, 0, 0);
+      ctx.drawImage(tmpCanvas, W - 350 - sigW / 2, bottomY - sigH - 10, sigW, sigH);
       // "Le Directeur Général" text under signature
       ctx.fillStyle = "#1A1A2E";
       ctx.font = "italic 24px Georgia, 'Times New Roman', serif";
