@@ -237,9 +237,14 @@ export function CertificateDownloadButton({
       ctx.font = "bold 12px 'Helvetica Neue', Arial, sans-serif";
       ctx.fillText("AUTHENTIQUE", cx, bottomY + 30);
 
-      // Signature (right)
+      // Signature (right) — load real signature image
+      const sigImg = await loadImage("/signature-dg.png");
+      const sigW = 280;
+      const sigH = (sigImg.height / sigImg.width) * sigW;
+      ctx.drawImage(sigImg, W - 350 - sigW / 2, bottomY - sigH - 10, sigW, sigH);
+      // "Le Directeur Général" text under signature
       ctx.fillStyle = "#1A1A2E";
-      ctx.font = "italic 36px 'Brush Script MT', 'Segoe Script', Georgia, cursive";
+      ctx.font = "italic 24px Georgia, 'Times New Roman', serif";
       ctx.fillText("Le Directeur Général", W - 350, bottomY - 5);
       // Line under signature
       ctx.strokeStyle = "#999";
@@ -360,4 +365,14 @@ function drawCornerFlourish(
   ctx.lineTo(x + dx * 6, y + dy * 6);
   ctx.lineTo(x + dx * 35, y + dy * 6);
   ctx.stroke();
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
 }
