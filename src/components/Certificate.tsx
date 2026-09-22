@@ -314,7 +314,8 @@ export function CertificateDownloadButton({
     }
   }
 
-  const shareText = `🎉 J'ai obtenu le certificat ${config.label} ${config.medal} de dactylographie sur Les 10 Doigts ! ${avgMpm} MPM avec ${avgAccuracy}% de précision.`;
+  const tierNames: Record<string, string> = { bronze: "Bronze", argent: "Argent", or: "Or" };
+  const shareText = `Je viens d'obtenir le certificat ${tierNames[tier]} de dactylographie sur Les 10 Doigts ! ${avgMpm} mots par minute avec ${avgAccuracy}% de precision. Rejoins-moi !`;
   const shareUrl = "https://www.les10doigts.com";
 
   return (

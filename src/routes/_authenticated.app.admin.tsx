@@ -767,9 +767,26 @@ function UsersTab({
                   {!isSuperAdmin && (
                     <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-[#f1f5f9]">
                       {p.email && (
-                        <a href={`mailto:${p.email}`} className="rounded-md border border-[#e2e8f0] px-3 py-1.5 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition">
+                        <button
+                          onClick={() => {
+                            const subject = prompt("Objet de l'email :");
+                            if (!subject) return;
+                            const body = prompt("Message :");
+                            if (!body) return;
+                            void (async () => {
+                              try {
+                                const { sendEmail } = await import("@/lib/email.functions");
+                                await sendEmail({ data: { to: p.email!, subject, body } });
+                                alert("Email envoyé avec succès !");
+                              } catch (err: any) {
+                                alert("Erreur envoi : " + (err.message || "Erreur inconnue"));
+                              }
+                            })();
+                          }}
+                          className="rounded-md border border-[#e2e8f0] px-3 py-1.5 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition"
+                        >
                           ✉️ Envoyer un email
-                        </a>
+                        </button>
                       )}
                       <button
                         disabled={busy}

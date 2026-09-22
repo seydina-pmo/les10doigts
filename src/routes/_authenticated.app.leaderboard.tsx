@@ -129,7 +129,7 @@ function LeaderboardPage() {
             : b.avg_accuracy - a.avg_accuracy
         );
 
-        setEntries(list.slice(0, 50));
+        setEntries(list.slice(0, 100));
       } catch (err) {
         console.error("Leaderboard error:", err);
       }
@@ -219,7 +219,7 @@ function LeaderboardPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-rule bg-paper-deep/60 font-mono text-[10px] uppercase tracking-[0.15em] text-ink-soft">
               <tr>
-                <th className="px-4 py-3 text-center w-16">#</th>
+                <th className="px-4 py-3 text-center w-16">Rang</th>
                 <th className="px-4 py-3 text-left">Nom</th>
                 <th className="px-4 py-3 text-center">Palier</th>
                 <th className="px-4 py-3 text-center">Niveaux</th>
