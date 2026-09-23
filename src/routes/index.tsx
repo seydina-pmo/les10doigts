@@ -318,7 +318,7 @@ function CTA() {
             <>
               <Link
                 to="/app/train"
-                search={{}}
+                search={{ level: undefined, weak: undefined }}
                 className="rounded-full bg-[#4361ee] px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-[#4361ee]/30 transition hover:-translate-y-0.5 hover:bg-[#3451d1] hover:shadow-xl"
               >
                 🚀 S&apos;entraîner maintenant

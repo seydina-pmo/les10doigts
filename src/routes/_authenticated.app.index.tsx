@@ -298,7 +298,7 @@ function EmptyState({ isFirstVisit }: { isFirstVisit: boolean }) {
       )}
       <Link
         to="/app/train"
-        search={{}}
+        search={{ level: undefined, weak: undefined }}
         className="mt-6 inline-block rounded-md bg-copper px-5 py-2.5 text-sm font-medium text-paper shadow-sm transition hover:-translate-y-0.5 hover:bg-copper-deep"
       >
         {isFirstVisit ? "🚀 Lancer ma première leçon" : "Commencer maintenant"}

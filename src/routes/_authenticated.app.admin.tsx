@@ -50,6 +50,7 @@ type Sub = {
   plan: string;
   status: string;
   current_period_end: string | null;
+  expires_at: string | null;
   created_at: string;
 };
 
@@ -123,14 +124,14 @@ function AdminPage() {
         const [pRes, rRes, sRes, aRes, mRes] = await Promise.all([
           supabase.from("profiles").select("id, display_name, email, created_at, disabled_at").order("created_at", { ascending: false }),
           supabase.from("user_roles").select("user_id, role"),
-          supabase.from("subscriptions").select("id, user_id, plan, status, current_period_end, created_at").order("created_at", { ascending: false }),
+          supabase.from("subscriptions").select("id, user_id, plan, status, expires_at, created_at").order("created_at", { ascending: false }),
           supabase.from("lesson_attempts").select("user_id, level, mpm, accuracy, created_at").order("created_at", { ascending: false }).limit(2000),
           supabase.from("contact_messages").select("*").order("created_at", { ascending: false }),
         ]);
 
         setProfiles((pRes.data as Profile[]) ?? []);
         setRoles((rRes.data as UserRole[]) ?? []);
-        setSubs((sRes.data as Sub[]) ?? []);
+        setSubs((sRes.data as unknown as Sub[]) ?? []);
         setAttempts((aRes.data as Attempt[]) ?? []);
         setMessages((mRes.data as ContactMsg[]) ?? []);
 
@@ -1091,8 +1092,7 @@ function SchoolCard({
         </p>
       )}
 
-      {/* Stored credentials (always visible for active schools) */}
-      {s.status === "active" && (s as Record<string, unknown>).admin_credentials_email && (
+      {s.status === "active" && !!(s as Record<string, unknown>).admin_credentials_email && (
         <div className="mt-3 rounded-md border border-[#10b981]/30 bg-[#ecfdf5] p-3">
           <p className="font-mono text-[10px] uppercase tracking-wider text-[#10b981] font-bold mb-1">Identifiants admin école</p>
           <div className="font-mono text-sm">

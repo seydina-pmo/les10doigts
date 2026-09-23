@@ -42,18 +42,17 @@ function ExamPage() {
         .eq("user_id", user.id);
       if (attempts) {
         const best = bestPerLevel(attempts as { level: number; mpm: number; accuracy: number }[]);
-        const prog = progressFor(best);
-        setValidatedLevels(prog.validated);
+        const prog = progressFor(best as any, "bronze");
+        setValidatedLevels(prog.done);
       }
       // Get past exam results
-      const { data: exams } = await supabase
-        .from("exam_results")
+      const { data: exams } = await (supabase.from("exam_results" as any))
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (exams) {
         setPastResults(
-          exams.map((e) => ({
+          (exams as any[]).map((e: any) => ({
             tier: e.tier as ExamTier,
             passed: e.passed as boolean,
             mpm: e.mpm as number,
@@ -329,7 +328,7 @@ function ExamRunner({
     };
 
     // Save to Supabase
-    void supabase.from("exam_results").insert({
+    void (supabase.from("exam_results" as any)).insert({
       user_id: userId,
       tier,
       passed,
