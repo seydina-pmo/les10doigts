@@ -100,6 +100,7 @@ function AdminPage() {
   const [schools, setSchools] = useState<School[]>([]);
   const [messages, setMessages] = useState<ContactMsg[]>([]);
   const [credentials, setCreds] = useState<{ email: string; password: string } | null>(null);
+  const [emailDraft, setEmailDraft] = useState<Record<string, { to: string; subject: string; body: string }>>({});
   const [loading, setLoading] = useState(true);
 
   // Check admin role + load data
@@ -767,27 +768,62 @@ function UsersTab({
 
                   {!isSuperAdmin && (
                     <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-[#f1f5f9]">
-                      {p.email && (
+                      {p.email && !emailDraft[p.id] && (
                         <button
-                          onClick={() => {
-                            const subject = prompt("Objet de l'email :");
-                            if (!subject) return;
-                            const body = prompt("Message :");
-                            if (!body) return;
-                            void (async () => {
-                              try {
-                                const { sendEmail } = await import("@/lib/email.functions");
-                                await sendEmail({ data: { to: p.email!, subject, body } });
-                                alert("Email envoyé avec succès !");
-                              } catch (err: any) {
-                                alert("Erreur envoi : " + (err.message || "Erreur inconnue"));
-                              }
-                            })();
-                          }}
+                          onClick={() => setEmailDraft(prev => ({ ...prev, [p.id]: { to: p.email!, subject: "", body: "" } }))}
                           className="rounded-md border border-[#e2e8f0] px-3 py-1.5 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition"
                         >
                           ✉️ Envoyer un email
                         </button>
+                      )}
+                      {emailDraft[p.id] && (
+                        <div className="w-full mt-3 rounded-lg border border-[#c7d2fe] bg-[#f8faff] p-4 space-y-3 animate-fade-in">
+                          <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#6366f1] font-bold">
+                            ✉️ Nouveau message à {p.email}
+                          </p>
+                          <input
+                            type="text"
+                            placeholder="Objet de l'email"
+                            value={emailDraft[p.id]?.subject ?? ""}
+                            onChange={e => setEmailDraft(prev => ({ ...prev, [p.id]: { ...prev[p.id]!, subject: e.target.value } }))}
+                            className="w-full rounded-md border border-[#e2e8f0] px-3 py-2 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20"
+                          />
+                          <textarea
+                            placeholder="Tapez votre message ici..."
+                            rows={8}
+                            value={emailDraft[p.id]?.body ?? ""}
+                            onChange={e => setEmailDraft(prev => ({ ...prev, [p.id]: { ...prev[p.id]!, body: e.target.value } }))}
+                            className="w-full rounded-md border border-[#e2e8f0] px-3 py-2 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20 resize-y font-sans leading-relaxed"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              disabled={busy || !emailDraft[p.id]?.subject || !emailDraft[p.id]?.body}
+                              onClick={async () => {
+                                const draft = emailDraft[p.id];
+                                if (!draft) return;
+                                setBusy(true);
+                                try {
+                                  const { sendEmail } = await import("@/lib/email.functions");
+                                  await sendEmail({ data: { to: draft.to, subject: draft.subject, body: draft.body } });
+                                  alert("✅ Email envoyé avec succès !");
+                                  setEmailDraft(prev => { const n = { ...prev }; delete n[p.id]; return n; });
+                                } catch (err: any) {
+                                  alert("❌ Erreur : " + (err.message || "Erreur inconnue"));
+                                }
+                                setBusy(false);
+                              }}
+                              className="rounded-md bg-[#6366f1] px-4 py-2 text-xs font-semibold text-white hover:bg-[#4f46e5] transition disabled:opacity-40"
+                            >
+                              {busy ? "Envoi…" : "📨 Envoyer"}
+                            </button>
+                            <button
+                              onClick={() => setEmailDraft(prev => { const n = { ...prev }; delete n[p.id]; return n; })}
+                              className="rounded-md border border-[#e2e8f0] px-4 py-2 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition"
+                            >
+                              Annuler
+                            </button>
+                          </div>
+                        </div>
                       )}
                       <button
                         disabled={busy}
