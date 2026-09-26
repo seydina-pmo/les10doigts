@@ -16,6 +16,7 @@ import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as EcolesRouteImport } from './routes/ecoles'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as MerciPaiementRouteImport } from './routes/merci-paiement'
 import { Route as MethodeRouteImport } from './routes/methode'
 import { Route as ParticuliersRouteImport } from './routes/particuliers'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -66,6 +67,11 @@ const EcolesRoute = EcolesRouteImport.update({
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerciPaiementRoute = MerciPaiementRouteImport.update({
+  id: '/merci-paiement',
+  path: '/merci-paiement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MethodeRoute = MethodeRouteImport.update({
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
+  '/merci-paiement': typeof MerciPaiementRoute
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
+  '/merci-paiement': typeof MerciPaiementRoute
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/ecoles': typeof EcolesRoute
   '/guide': typeof GuideRoute
+  '/merci-paiement': typeof MerciPaiementRoute
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/ecoles'
     | '/guide'
+    | '/merci-paiement'
     | '/methode'
     | '/particuliers'
     | '/sitemap.xml'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/ecoles'
     | '/guide'
+    | '/merci-paiement'
     | '/methode'
     | '/particuliers'
     | '/sitemap.xml'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/ecoles'
     | '/guide'
+    | '/merci-paiement'
     | '/methode'
     | '/particuliers'
     | '/sitemap.xml'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   EcolesRoute: typeof EcolesRoute
   GuideRoute: typeof GuideRoute
+  MerciPaiementRoute: typeof MerciPaiementRoute
   MethodeRoute: typeof MethodeRoute
   ParticuliersRoute: typeof ParticuliersRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/guide'
       fullPath: '/guide'
       preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merci-paiement': {
+      id: '/merci-paiement'
+      path: '/merci-paiement'
+      fullPath: '/merci-paiement'
+      preLoaderRoute: typeof MerciPaiementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/methode': {
@@ -548,6 +568,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   EcolesRoute: EcolesRoute,
   GuideRoute: GuideRoute,
+  MerciPaiementRoute: MerciPaiementRoute,
   MethodeRoute: MethodeRoute,
   ParticuliersRoute: ParticuliersRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
