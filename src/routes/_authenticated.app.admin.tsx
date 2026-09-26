@@ -576,7 +576,7 @@ function UsersTab({
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [emailDraft, setEmailDraft] = useState<Record<string, { to: string; subject: string; body: string }>>({});
+  const [emailDraft, setEmailDraft] = useState<Record<string, { to: string; subject: string; body: string; html?: boolean; imageUrl?: string }>>({});
 
   const roleMap = useMemo(() => {
     const m: Record<string, string> = {};
@@ -769,7 +769,7 @@ function UsersTab({
                     <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-[#f1f5f9]">
                       {p.email && !emailDraft[p.id] ? (
                         <button
-                          onClick={() => setEmailDraft(prev => ({ ...prev, [p.id]: { to: p.email!, subject: "", body: "" } }))}
+                          onClick={() => setEmailDraft(prev => ({ ...prev, [p.id]: { to: p.email!, subject: "", body: "", html: true, imageUrl: "" } }))}
                           className="rounded-md border border-[#e2e8f0] px-3 py-1.5 text-xs text-[#5a7a9a] hover:bg-[#f1f5f9] transition"
                         >
                           ✉️ Envoyer un email
@@ -778,7 +778,7 @@ function UsersTab({
                       {emailDraft[p.id] ? (
                         <div className="w-full mt-3 rounded-lg border border-[#c7d2fe] bg-[#f8faff] p-4 space-y-3 animate-fade-in">
                           <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#6366f1] font-bold">
-                            Nouveau message à {p.email}
+                            Nouveau message a {p.email}
                           </p>
                           <input
                             type="text"
@@ -794,6 +794,24 @@ function UsersTab({
                             onChange={e => setEmailDraft(prev => ({ ...prev, [p.id]: { ...prev[p.id]!, body: e.target.value } }))}
                             className="w-full rounded-md border border-[#e2e8f0] px-3 py-2 text-sm outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20 resize-y font-sans leading-relaxed"
                           />
+                          <input
+                            type="text"
+                            placeholder="URL image QR code (optionnel)"
+                            value={emailDraft[p.id]?.imageUrl ?? ""}
+                            onChange={e => setEmailDraft(prev => ({ ...prev, [p.id]: { ...prev[p.id]!, imageUrl: e.target.value } }))}
+                            className="w-full rounded-md border border-[#e2e8f0] px-3 py-2 text-xs outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/20 text-[#5a7a9a]"
+                          />
+                          <div className="flex items-center gap-4">
+                            <label className="flex items-center gap-2 text-xs text-[#5a7a9a] cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={emailDraft[p.id]?.html ?? true}
+                                onChange={e => setEmailDraft(prev => ({ ...prev, [p.id]: { ...prev[p.id]!, html: e.target.checked } }))}
+                                className="rounded"
+                              />
+                              Email HTML (mise en forme pro)
+                            </label>
+                          </div>
                           <div className="flex gap-2">
                             <button
                               disabled={!!actionBusy || !emailDraft[p.id]?.subject || !emailDraft[p.id]?.body}
@@ -803,8 +821,8 @@ function UsersTab({
                                 setActionBusy(p.id);
                                 try {
                                   const { sendEmail } = await import("@/lib/email.functions");
-                                  await sendEmail({ data: { to: draft.to, subject: draft.subject, body: draft.body } });
-                                  alert("Email envoyé avec succès !");
+                                  await sendEmail({ data: { to: draft.to, subject: draft.subject, body: draft.body, html: draft.html, imageUrl: draft.imageUrl || undefined } });
+                                  alert("Email envoye avec succes !");
                                   setEmailDraft(prev => { const n = { ...prev }; delete n[p.id]; return n; });
                                 } catch (err: any) {
                                   alert("Erreur : " + (err.message || "Erreur inconnue"));
@@ -813,7 +831,7 @@ function UsersTab({
                               }}
                               className="rounded-md bg-[#6366f1] px-4 py-2 text-xs font-semibold text-white hover:bg-[#4f46e5] transition disabled:opacity-40"
                             >
-                              {actionBusy === p.id ? "Envoi…" : "Envoyer"}
+                              {actionBusy === p.id ? "Envoi..." : "Envoyer"}
                             </button>
                             <button
                               onClick={() => setEmailDraft(prev => { const n = { ...prev }; delete n[p.id]; return n; })}

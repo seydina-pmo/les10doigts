@@ -13,19 +13,66 @@ const FROM_EMAIL = "La Méthode des 10 Doigts <contact@les10doigts.com>";
 
 // ---------- Send email (generic) ----------
 
+// ---------- Send email (generic, supports HTML + image) ----------
+
 export const sendEmail = createServerFn({ method: "POST" })
-  .inputValidator((d: { to: string; subject: string; body: string }) => d)
+  .inputValidator((d: { to: string; subject: string; body: string; html?: boolean; imageUrl?: string }) => d)
   .middleware([requireSupabaseAuth])
   .handler(async ({ data }) => {
     const resend = await getResend();
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      replyTo: "contact@les10doigts.com",
-      to: data.to,
-      subject: data.subject,
-      text: data.body,
-    });
-    if (error) throw new Error(error.message);
+
+    if (data.html) {
+      const htmlBody = data.body
+        .split("\n\n")
+        .map(p => {
+          const withLinks = p.replace(
+            /(https?:\/\/[^\s]+)/g,
+            '<a href="$1" style="color: #4361ee; text-decoration: underline;">$1</a>'
+          );
+          return `<p style="color: #333; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">${withLinks.replace(/\n/g, "<br/>")}</p>`;
+        })
+        .join("");
+
+      const imageBlock = data.imageUrl
+        ? `<div style="text-align: center; margin: 24px 0;">
+            <p style="color: #888; font-size: 13px; margin-bottom: 8px;">Ou scannez le QR code :</p>
+            <img src="${data.imageUrl}" alt="QR Code paiement" style="width: 200px; height: 200px; border-radius: 12px; border: 1px solid #e2e8f0;" />
+          </div>`
+        : "";
+
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        replyTo: "contact@les10doigts.com",
+        to: data.to,
+        subject: data.subject,
+        html: `
+          <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 600px; margin: 0 auto; padding: 40px 24px;">
+            <div style="border-bottom: 2px solid #a0714f; padding-bottom: 16px; margin-bottom: 24px;">
+              <h2 style="color: #1e3a5f; font-size: 22px; margin: 0;">La M\u00e9thode des 10 Doigts</h2>
+            </div>
+            ${htmlBody}
+            ${imageBlock}
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 32px;">
+              <p style="color: #999; font-size: 12px; margin: 0;">
+                L'\u00e9quipe La M\u00e9thode des 10 Doigts<br/>
+                <a href="https://www.les10doigts.com" style="color: #a0714f;">www.les10doigts.com</a>
+              </p>
+            </div>
+          </div>
+        `,
+      });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        replyTo: "contact@les10doigts.com",
+        to: data.to,
+        subject: data.subject,
+        text: data.body,
+      });
+      if (error) throw new Error(error.message);
+    }
+
     return { ok: true as const };
   });
 
