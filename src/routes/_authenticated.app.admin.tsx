@@ -42,6 +42,9 @@ type Profile = {
   email: string | null;
   created_at: string;
   disabled_at: string | null;
+  timezone: string | null;
+  locale: string | null;
+  last_seen_at: string | null;
 };
 
 type Sub = {
@@ -76,6 +79,46 @@ type ContactMsg = {
   reply_text: string | null;
   created_at: string;
 };
+
+/** Map timezone to country name + flag */
+function guessCountry(tz: string | null): string {
+  if (!tz) return "\u2014";
+  const map: Record<string, string> = {
+    "Europe/Paris": "\ud83c\uddeb\ud83c\uddf7 France",
+    "Europe/London": "\ud83c\uddec\ud83c\udde7 Royaume-Uni",
+    "Europe/Berlin": "\ud83c\udde9\ud83c\uddea Allemagne",
+    "Europe/Brussels": "\ud83c\udde7\ud83c\uddea Belgique",
+    "Europe/Zurich": "\ud83c\udde8\ud83c\udded Suisse",
+    "Europe/Luxembourg": "\ud83c\uddf1\ud83c\uddfa Luxembourg",
+    "Europe/Rome": "\ud83c\uddee\ud83c\uddf9 Italie",
+    "Europe/Madrid": "\ud83c\uddea\ud83c\uddf8 Espagne",
+    "Europe/Amsterdam": "\ud83c\uddf3\ud83c\uddf1 Pays-Bas",
+    "Africa/Dakar": "\ud83c\uddf8\ud83c\uddf3 Senegal",
+    "Africa/Abidjan": "\ud83c\udde8\ud83c\uddee Cote d'Ivoire",
+    "Africa/Bamako": "\ud83c\uddf2\ud83c\uddf1 Mali",
+    "Africa/Conakry": "\ud83c\uddec\ud83c\uddf3 Guinee",
+    "Africa/Douala": "\ud83c\udde8\ud83c\uddf2 Cameroun",
+    "Africa/Lagos": "\ud83c\uddf3\ud83c\uddec Nigeria",
+    "Africa/Kinshasa": "\ud83c\udde8\ud83c\udde9 RD Congo",
+    "Africa/Libreville": "\ud83c\uddec\ud83c\udde6 Gabon",
+    "Africa/Lome": "\ud83c\uddf9\ud83c\uddec Togo",
+    "Africa/Niamey": "\ud83c\uddf3\ud83c\uddea Niger",
+    "Africa/Ouagadougou": "\ud83c\udde7\ud83c\uddeb Burkina Faso",
+    "Africa/Nouakchott": "\ud83c\uddf2\ud83c\uddf7 Mauritanie",
+    "Africa/Tunis": "\ud83c\uddf9\ud83c\uddf3 Tunisie",
+    "Africa/Algiers": "\ud83c\udde9\ud83c\uddff Algerie",
+    "Africa/Casablanca": "\ud83c\uddf2\ud83c\udde6 Maroc",
+    "America/New_York": "\ud83c\uddfa\ud83c\uddf8 USA (Est)",
+    "America/Los_Angeles": "\ud83c\uddfa\ud83c\uddf8 USA (Ouest)",
+    "America/Toronto": "\ud83c\udde8\ud83c\udde6 Canada",
+    "Asia/Dubai": "\ud83c\udde6\ud83c\uddea Emirats",
+    "Indian/Reunion": "\ud83c\uddf7\ud83c\uddea Reunion",
+    "Indian/Antananarivo": "\ud83c\uddf2\ud83c\uddec Madagascar",
+  };
+  if (map[tz]) return map[tz];
+  const parts = tz.split("/");
+  return parts.length > 1 ? parts[1].replace(/_/g, " ") : tz;
+}
 
 /* ---------- main page ---------- */
 
@@ -121,14 +164,14 @@ function AdminPage() {
 
         // Load all data in parallel
         const [pRes, rRes, sRes, aRes, mRes] = await Promise.all([
-          supabase.from("profiles").select("id, display_name, email, created_at, disabled_at").order("created_at", { ascending: false }),
+          supabase.from("profiles").select("id, display_name, email, created_at, disabled_at, timezone, locale, last_seen_at").order("created_at", { ascending: false }),
           supabase.from("user_roles").select("user_id, role"),
           supabase.from("subscriptions").select("id, user_id, plan, status, expires_at, created_at").order("created_at", { ascending: false }),
           supabase.from("lesson_attempts").select("user_id, level, mpm, accuracy, created_at").order("created_at", { ascending: false }).limit(2000),
           supabase.from("contact_messages").select("*").order("created_at", { ascending: false }),
         ]);
 
-        setProfiles((pRes.data as Profile[]) ?? []);
+        setProfiles((pRes.data as unknown as Profile[]) ?? []);
         setRoles((rRes.data as UserRole[]) ?? []);
         setSubs((sRes.data as unknown as Sub[]) ?? []);
         setAttempts((aRes.data as Attempt[]) ?? []);
@@ -763,8 +806,27 @@ function UsersTab({
                       <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#5a7a9a]">Rôle</p>
                       <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{role}</p>
                     </div>
-                  </div>
-
+                    </div>
+                  {(p.timezone || p.locale || p.last_seen_at) ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-lg bg-[#eff6ff] p-3">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3b82f6]">Pays / Region</p>
+                        <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{guessCountry(p.timezone)}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#eff6ff] p-3">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3b82f6]">Fuseau horaire</p>
+                        <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{p.timezone || "—"}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#eff6ff] p-3">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3b82f6]">Langue</p>
+                        <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{p.locale || "—"}</p>
+                      </div>
+                      <div className="rounded-lg bg-[#eff6ff] p-3">
+                        <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[#3b82f6]">Derniere connexion</p>
+                        <p className="mt-1 text-sm font-medium text-[#1e3a5f]">{p.last_seen_at ? new Date(p.last_seen_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}</p>
+                      </div>
+                    </div>
+                  ) : null}
                   {!isSuperAdmin && (
                     <div className="mt-5 flex flex-wrap items-center gap-2 pt-4 border-t border-[#f1f5f9]">
                       {p.email && !emailDraft[p.id] ? (

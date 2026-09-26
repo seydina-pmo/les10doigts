@@ -7,6 +7,21 @@ export const Route = createFileRoute("/_authenticated")({
   component: Gate,
 });
 
+/** Silently save timezone + locale + last_seen to the user's profile */
+async function updateGeoInfo(userId: string) {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; // e.g. "Europe/Paris"
+    const locale = navigator.language || ""; // e.g. "fr-FR"
+    await (supabase.from("profiles") as any).update({
+      timezone: tz,
+      locale,
+      last_seen_at: new Date().toISOString(),
+    }).eq("id", userId);
+  } catch {
+    // Silent — non-critical
+  }
+}
+
 function Gate() {
   const nav = useNavigate();
   const [ready, setReady] = useState(false);
@@ -24,6 +39,8 @@ function Gate() {
         if (data.session) {
           setReady(true);
           checkedRef.current = true;
+          // Silently update geo info
+          void updateGeoInfo(data.session.user.id);
           return;
         }
 
