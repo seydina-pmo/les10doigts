@@ -88,24 +88,14 @@ function Page() {
           >
             🚀 Essai gratuit — 3 niveaux offerts
           </Link>
-          <button
-            onClick={async () => {
-              try {
-                const { createPayTechPayment } = await import("@/lib/paytech.functions");
-                const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
-                if (res.success && res.redirectUrl) {
-                  window.location.href = res.redirectUrl;
-                } else {
-                  alert(res.error || "Erreur de connexion à PayTech");
-                }
-              } catch (err: any) {
-                alert("Erreur de paiement: " + err.message);
-              }
-            }}
-            className="rounded-md border border-copper/40 bg-copper/5 px-6 py-3.5 text-sm font-medium text-copper-deep transition hover:-translate-y-0.5 hover:bg-copper/10 cursor-pointer"
+          <a
+            href="https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-copper/40 bg-copper/5 px-6 py-3.5 text-sm font-medium text-copper-deep transition hover:-translate-y-0.5 hover:bg-copper/10"
           >
-            💳 S&apos;abonner — 10 € / mois
-          </button>
+            S&apos;abonner — 10 € / mois
+          </a>
         </div>
       </section>
 
@@ -187,24 +177,14 @@ function Page() {
               ))}
             </ul>
 
-            <button
-              onClick={async () => {
-                try {
-                  const { createPayTechPayment } = await import("@/lib/paytech.functions");
-                  const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
-                  if (res.success && res.redirectUrl) {
-                    window.location.href = res.redirectUrl;
-                  } else {
-                    alert(res.error || "Erreur de connexion au serveur de paiement");
-                  }
-                } catch (err: any) {
-                  alert("Erreur de paiement: " + err.message);
-                }
-              }}
-              className="mt-8 block w-full rounded-md bg-[#4361ee] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[#3451d1] cursor-pointer"
+            <a
+              href="https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 block w-full rounded-md bg-[#4361ee] px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-[#3451d1]"
             >
               S&apos;abonner maintenant
-            </button>
+            </a>
           </div>
         </div>
 
@@ -259,24 +239,14 @@ function Page() {
             >
               Essai gratuit — 3 niveaux offerts
             </Link>
-            <button
-              onClick={async () => {
-                try {
-                  const { createPayTechPayment } = await import("@/lib/paytech.functions");
-                  const res = await createPayTechPayment({ data: { plan: "particulier", originUrl: window.location.origin } });
-                  if (res.success && res.redirectUrl) {
-                    window.location.href = res.redirectUrl;
-                  } else {
-                    alert(res.error || "Erreur de connexion au serveur de paiement");
-                  }
-                } catch (err: any) {
-                  alert("Erreur de paiement: " + err.message);
-                }
-              }}
-              className="rounded-md border border-white/20 px-6 py-3 text-sm font-medium text-foreground transition hover:bg-white/5 cursor-pointer"
+            <a
+              href="https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-white/20 px-6 py-3 text-sm font-medium text-foreground transition hover:bg-white/5"
             >
               S&apos;abonner — 10 €/mois
-            </button>
+            </a>
           </div>
         </div>
       </section>

@@ -35,7 +35,7 @@ const plans: { name: string; price: string; note: string; bullets: string[]; cta
       "Certifications Bronze · Argent · Or",
     ],
     cta: "S'abonner",
-    isPayTech: true,
+    href: "https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4",
     featured: true,
   },
   {
