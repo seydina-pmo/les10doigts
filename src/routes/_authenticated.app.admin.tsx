@@ -49,7 +49,6 @@ type Sub = {
   user_id: string;
   plan: string;
   status: string;
-  current_period_end: string | null;
   expires_at: string | null;
   created_at: string;
 };
@@ -916,7 +915,7 @@ function SubscriptionsTab({ subs, profiles }: { subs: Sub[]; profiles: Profile[]
                   <td className="px-4 py-3 font-mono text-xs uppercase">{s.plan}</td>
                   <td className="px-4 py-3"><SubBadge status={s.status} /></td>
                   <td className="px-4 py-3 text-[#5a7a9a]">
-                    {s.current_period_end ? new Date(s.current_period_end).toLocaleDateString("fr-FR") : "—"}
+                    {s.expires_at ? new Date(s.expires_at).toLocaleDateString("fr-FR") : "—"}
                   </td>
                   <td className="px-4 py-3 text-[#5a7a9a]">
                     {new Date(s.created_at).toLocaleDateString("fr-FR")}
