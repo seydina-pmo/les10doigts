@@ -54,6 +54,10 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Fire Meta Pixel CompleteRegistration event
+        if (typeof window !== "undefined" && (window as any).fbq) {
+          (window as any).fbq("track", "CompleteRegistration");
+        }
         // Email confirmation is disabled — user is logged in immediately
         // onAuthStateChange in the Gate will redirect to /app
       } else {

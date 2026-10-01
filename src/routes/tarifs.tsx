@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/tarifs")({
   head: () => ({
@@ -55,6 +56,13 @@ const plans: { name: string; price: string; note: string; bullets: string[]; cta
 
 
 function Page() {
+  // Fire Meta Pixel ViewContent when Tarifs page loads
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "ViewContent");
+    }
+  }, []);
+
   return (
     <main className="min-h-screen">
       <SiteHeader />
@@ -114,6 +122,11 @@ function Page() {
                 href={p.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  if (p.featured && typeof window !== "undefined" && (window as any).fbq) {
+                    (window as any).fbq("track", "InitiateCheckout", { value: 10.00, currency: "EUR" });
+                  }
+                }}
                 className={
                   "mt-8 inline-block w-full rounded-md px-4 py-2.5 text-center text-sm font-medium transition " +
                   (p.featured
