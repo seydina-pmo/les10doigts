@@ -23,6 +23,7 @@ export function TypingEngine({
   const [state, setState] = useState<EngineState>("ready");
   const [saved, setSaved] = useState(false);
   const [ghostIndex, setGhostIndex] = useState(0);
+  const [capsLock, setCapsLock] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Determine target MPM for ghost cursor based on level
@@ -53,7 +54,6 @@ export function TypingEngine({
   // Ghost cursor interval — advances at targetMPM pace
   useEffect(() => {
     if (!hasGhost || state !== "typing" || !startedAt) return;
-    // chars per ms = (targetMPM * 5) / 60000
     const charsPerMs = (targetMPM * 5) / 60000;
     const interval = setInterval(() => {
       const elapsed = Date.now() - startedAt;
@@ -66,12 +66,24 @@ export function TypingEngine({
   // Global keydown handler — captures ALL keyboard input on the page
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
+      // Check Caps Lock state
+      if (typeof e.getModifierState === "function") {
+        setCapsLock(e.getModifierState("CapsLock"));
+      }
+
       const st = stateRef.current;
       if (st === "done") return;
 
-      // Ignore if user is typing in another input/textarea
+      // Ignore if user is typing in an input/textarea/select
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // Ignore modifier/system keys completely
+      const modifierKeys = [
+        "Shift", "Control", "Alt", "Meta", "CapsLock", "Tab",
+        "Escape", "AltGraph", "Dead", "ContextMenu", "Unidentified"
+      ];
+      if (modifierKeys.includes(e.key)) return;
 
       // Only handle printable chars, backspace, enter
       if (e.key.length !== 1 && e.key !== "Backspace" && e.key !== "Enter") return;
@@ -98,7 +110,13 @@ export function TypingEngine({
       const expected = text[currentTyped.length];
       if (!expected) return;
 
-      const key = e.key === "Enter" ? "\n" : e.key;
+      let key = e.key === "Enter" ? "\n" : e.key;
+
+      // Case tolerance: if expected is lowercase and user typed uppercase (e.g. Caps Lock ON or Shift),
+      // accept it as correct if lowercasing matches
+      if (key !== expected && expected.toLowerCase() === expected && key.toLowerCase() === expected) {
+        key = expected;
+      }
 
       if (key !== expected) {
         setErrors((n) => n + 1);
@@ -117,7 +135,7 @@ export function TypingEngine({
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [text]); // Only re-bind if text changes
+  }, [text]);
 
   const nextChar = typed.length < text.length ? text[typed.length] : null;
   const highlight = nextChar ? keyIdFor(nextChar) : null;
@@ -131,7 +149,6 @@ export function TypingEngine({
         ? 100
         : Math.max(0, Math.round(((typed.length - errors) / (typed.length + errors)) * 100));
     return { mpm, acc, elapsedMs: Math.round(elapsed * 1000) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typed.length, errors, startedAt]);
 
   // Save attempt when done
@@ -182,41 +199,55 @@ export function TypingEngine({
         setSaved(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
+
+  const handleOverlayClick = useCallback(() => {
+    window.focus();
+    if (state === "ready") {
+      // Focus element
+      containerRef.current?.focus();
+    }
   }, [state]);
 
   return (
     <div
       ref={containerRef}
-      className="overflow-hidden rounded-2xl border border-rule bg-card"
+      tabIndex={0}
+      className="outline-none overflow-hidden rounded-2xl border border-rule bg-card focus:border-copper/50"
     >
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-rule bg-paper-deep/60 px-5 py-3 font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-        <span>leçon {String(level).padStart(2, "0")}
+        <span>
+          leçon {String(level).padStart(2, "0")}
           {hasGhost && (
             <span className="ml-2 text-[10px] normal-case tracking-normal">
               (guide: {targetMPM} MPM)
             </span>
           )}
         </span>
-        <span>
-          {state === "ready" ? (
-            <span className="animate-pulse text-copper">en attente…</span>
-          ) : (
-            <>MPM {stats.mpm} · précision {stats.acc}% · erreurs {errors}</>
+        <div className="flex items-center gap-3">
+          {capsLock && (
+            <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 px-2 py-0.5 font-sans text-[11px] font-medium text-amber-700 animate-pulse">
+              ⚠️ Caps Lock activé
+            </span>
           )}
-        </span>
+          <span>
+            {state === "ready" ? (
+              <span className="animate-pulse text-copper">en attente…</span>
+            ) : (
+              <>MPM {stats.mpm} · précision {stats.acc}% · erreurs {errors}</>
+            )}
+          </span>
+        </div>
       </div>
 
       {/* Ghost pace bar */}
       {hasGhost && state === "typing" && (
         <div className="relative h-1.5 bg-paper-deep">
-          {/* Ghost progress */}
           <div
             className="absolute inset-y-0 left-0 bg-destructive/30 transition-all duration-200"
             style={{ width: `${(ghostIndex / text.length) * 100}%` }}
           />
-          {/* User progress */}
           <div
             className="absolute inset-y-0 left-0 bg-copper transition-all duration-200"
             style={{ width: `${(typed.length / text.length) * 100}%` }}
@@ -227,8 +258,10 @@ export function TypingEngine({
       {/* Ready overlay + Text area */}
       <div className="relative min-h-[180px]">
         {state === "ready" && (
-          <div
-            className="absolute inset-0 z-10 grid place-items-center bg-card/95 backdrop-blur-[2px]"
+          <button
+            type="button"
+            onClick={handleOverlayClick}
+            className="absolute inset-0 z-10 grid w-full place-items-center bg-card/95 backdrop-blur-[2px] cursor-pointer text-left border-0 transition-opacity hover:bg-card/90"
           >
             <div className="text-center animate-fade-in px-4">
               <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-copper/15">
@@ -241,10 +274,10 @@ export function TypingEngine({
                 Main gauche sur <strong className="font-mono text-foreground">Q S D F</strong> · Main droite sur <strong className="font-mono text-foreground">J K L M</strong>
               </p>
               <p className="mt-3 animate-pulse font-mono text-xs uppercase tracking-[0.2em] text-copper">
-                tapez la première lettre pour commencer
+                tapez la première lettre ou cliquez ici pour commencer
               </p>
             </div>
-          </div>
+          </button>
         )}
 
         {/* Text area */}
@@ -261,7 +294,7 @@ export function TypingEngine({
                 : i === typed.length
                   ? "cur"
                   : hasGhost && i < ghostIndex
-                    ? "ghost" // behind ghost but not typed = user is behind
+                    ? "ghost"
                     : "future";
             return (
               <span
@@ -306,6 +339,7 @@ export function TypingEngine({
             {saved && <span className="ml-2 text-ink-soft">enregistré ✓</span>}
           </p>
           <button
+            type="button"
             onClick={onNext}
             className="rounded-md bg-copper px-4 py-2 text-sm font-medium text-paper hover:bg-copper-deep"
           >

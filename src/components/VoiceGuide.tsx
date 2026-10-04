@@ -59,57 +59,82 @@ export function VoiceGuide({ page, compact = false }: { page: keyof typeof VOICE
     }
   }, [storageKey]);
 
-  // Auto-play on first visit (after a short delay)
+  // Auto-play on first visit (after a short delay, wrapped safely)
   useEffect(() => {
     if (hasPlayed || muted) return;
-    if (!("speechSynthesis" in window)) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
+    // Only speak on user interaction if autoplay is blocked by browser policy
     const timer = setTimeout(() => {
-      speak();
-    }, 1500); // Small delay to let the page render
+      try {
+        speak();
+      } catch (err) {
+        console.warn("[VoiceGuide] Speech synthesis blocked:", err);
+      }
+    }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      try {
+        if ("speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+        }
+      } catch {}
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasPlayed, muted]);
 
   function speak() {
-    if (!("speechSynthesis" in window)) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
-    // Stop any current speech
-    window.speechSynthesis.cancel();
+    try {
+      // Stop any current speech safely
+      window.speechSynthesis.cancel();
 
-    const script = VOICE_SCRIPTS[page];
-    if (!script) return;
+      const script = VOICE_SCRIPTS[page];
+      if (!script) return;
 
-    const utter = new SpeechSynthesisUtterance(script);
-    utter.lang = "fr-FR";
-    utter.rate = 0.95;
-    utter.pitch = 1.0;
-    utter.volume = 0.8;
+      const utter = new SpeechSynthesisUtterance(script);
+      utter.lang = "fr-FR";
+      utter.rate = 0.95;
+      utter.pitch = 1.0;
+      utter.volume = 0.8;
 
-    // Try to find a French voice
-    const voices = window.speechSynthesis.getVoices();
-    const frVoice = voices.find(
-      (v) => v.lang.startsWith("fr") && v.name.includes("Google"),
-    ) ?? voices.find((v) => v.lang.startsWith("fr"));
-    if (frVoice) utter.voice = frVoice;
+      // Try to find a French voice
+      const voices = window.speechSynthesis.getVoices();
+      const frVoice =
+        voices.find((v) => v.lang.startsWith("fr") && v.name.includes("Google")) ??
+        voices.find((v) => v.lang.startsWith("fr"));
+      if (frVoice) utter.voice = frVoice;
 
-    utter.onstart = () => setSpeaking(true);
-    utter.onend = () => {
+      utter.onstart = () => setSpeaking(true);
+      utter.onend = () => {
+        setSpeaking(false);
+        setHasPlayed(true);
+        try {
+          localStorage.setItem(storageKey, "1");
+        } catch {}
+      };
+      utter.onerror = (e) => {
+        // Handle audio error gracefully (e.g. user navigated or autoplay blocked)
+        console.warn("[VoiceGuide] Speech synthesis error:", e);
+        setSpeaking(false);
+      };
+
+      utterRef.current = utter;
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      console.warn("[VoiceGuide] speak exception:", err);
       setSpeaking(false);
-      setHasPlayed(true);
-      localStorage.setItem(storageKey, "1");
-    };
-    utter.onerror = () => {
-      setSpeaking(false);
-    };
-
-    utterRef.current = utter;
-    window.speechSynthesis.speak(utter);
+    }
   }
 
   function stop() {
-    window.speechSynthesis.cancel();
+    try {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch {}
     setSpeaking(false);
   }
 

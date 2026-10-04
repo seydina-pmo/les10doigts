@@ -6,6 +6,7 @@ import { VoiceGuide } from "@/components/VoiceGuide";
 import { Paywall } from "@/components/Paywall";
 import { useSubscription, canAccessLevel } from "@/lib/subscription";
 import { lessonFor } from "@/lib/exercises";
+import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/app/train")({
@@ -18,12 +19,19 @@ export const Route = createFileRoute("/_authenticated/app/train")({
 });
 
 function TrainPage() {
+  const { user } = useAuth();
   const { level: urlLevel, weak: weakParam } = Route.useSearch();
-  const [level, setLevel] = useState(urlLevel && urlLevel >= 1 && urlLevel <= 100 ? urlLevel : 1);
+  const [level, setLevelState] = useState(urlLevel && urlLevel >= 1 && urlLevel <= 100 ? urlLevel : 1);
+  const userSelectedRef = useRef(Boolean(urlLevel));
   const [focusMode, setFocusMode] = useState(false);
   const focusContainerRef = useRef<HTMLDivElement>(null);
   const { subscription } = useSubscription();
   const navigate = useNavigate();
+
+  const setLevel = useCallback((n: number | ((prev: number) => number)) => {
+    userSelectedRef.current = true;
+    setLevelState(n);
+  }, []);
 
   // Parse weak levels list from URL (e.g. "5,12,23,45")
   const weakLevels = weakParam
@@ -59,25 +67,33 @@ function TrainPage() {
     }
   }
 
-  // Resume at the highest level already attempted, but only if no URL level was specified
+  // Resume at the highest level already attempted, but only if user hasn't explicitly chosen a level
   useEffect(() => {
-    if (urlLevel) return; // URL param takes priority
+    if (urlLevel || userSelectedRef.current || !user?.id) return;
+    let cancelled = false;
+
     void (async () => {
       try {
-        const { data: u } = await supabase.auth.getUser();
-        if (!u.user) return;
         const { data } = await supabase
           .from("lesson_attempts")
           .select("level")
-          .eq("user_id", u.user.id)
+          .eq("user_id", user.id)
           .order("level", { ascending: false })
           .limit(1);
-        if (data && data[0]) setLevel(Math.min(100, (data[0].level as number) + 1));
+
+        if (!cancelled && !userSelectedRef.current && data && data[0]) {
+          const highest = data[0].level as number;
+          setLevelState(Math.min(100, highest + 1));
+        }
       } catch {
         // Silently fail
       }
     })();
-  }, [urlLevel]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [urlLevel, user?.id]);
 
   // Toggle focus mode + fullscreen
   const toggleFocus = useCallback(() => {
