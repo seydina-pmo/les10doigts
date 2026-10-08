@@ -107,8 +107,12 @@ function Page() {
                   try {
                     const { supabase } = await import("@/integrations/supabase/client");
                     const { data: s } = await supabase.auth.getSession();
-                    const userId = s.session?.user?.id;
-                    const userEmail = s.session?.user?.email;
+                    if (!s.session?.user) {
+                      window.location.href = "/auth";
+                      return;
+                    }
+                    const userId = s.session.user.id;
+                    const userEmail = s.session.user.email;
 
                     const { createSasPayPayment } = await import("@/lib/saspay.functions");
                     const res = await createSasPayPayment({

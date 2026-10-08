@@ -30,12 +30,12 @@ function MerciPaiement() {
         </h1>
 
         <p className="mt-4 text-lg text-[#5a7a9a] leading-relaxed">
-          Votre paiement a bien ete recu. Notre equipe va activer votre compte dans les
-          <strong className="text-[#1e3a5f]"> 5 prochaines minutes</strong>.
+          Votre paiement a bien été reçu. Votre abonnement est activé
+          <strong className="text-[#1e3a5f]"> automatiquement</strong>.
         </p>
 
         <p className="mt-3 text-[#5a7a9a]">
-          Vous recevrez un email de confirmation des que votre abonnement sera actif.
+          Si vous n'êtes pas connecté sur cet appareil, connectez-vous avec le même compte pour accéder à vos niveaux.
         </p>
 
         {/* What's next */}
@@ -46,11 +46,11 @@ function MerciPaiement() {
           <ul className="mt-3 space-y-3 text-sm text-[#5a7a9a]">
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-[#10b981]">1.</span>
-              <span>Votre compte sera active sous <strong>5 minutes</strong></span>
+              <span>Connectez-vous avec le compte utilisé pour le paiement</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-[#10b981]">2.</span>
-              <span>Les <strong>100 niveaux</strong> seront debloques automatiquement</span>
+              <span>Les <strong>100 niveaux</strong> sont débloqués</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-0.5 text-[#10b981]">3.</span>

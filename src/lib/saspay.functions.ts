@@ -11,7 +11,12 @@ export interface CreateSasPayInput {
 export const createSasPayPayment = createServerFn({ method: "POST" })
   .validator((data: CreateSasPayInput) => data)
   .handler(async ({ data }) => {
-    const apiKey = process.env.SASPAY_API_KEY || "sk_live_b827GiVRNHp4-jAbmu1nYegykchBxOptox-UgK4LPtI";
+    const apiKey = process.env.SASPAY_API_KEY;
+
+    if (!apiKey) {
+      console.error("[SasPay] Missing SASPAY_API_KEY environment variable");
+      return { success: false, error: "Configuration serveur manquante (SASPAY_API_KEY)" };
+    }
 
     const isSchool = data.plan === "school";
     const amountStr = isSchool ? "115.00" : "10.00";
@@ -25,8 +30,8 @@ export const createSasPayPayment = createServerFn({ method: "POST" })
       amount: amountStr,
       currency: "EUR",
       description,
-      return_url: `${origin}/app?payment=success`,
-      success_url: `${origin}/app?payment=success`,
+      return_url: `${origin}/merci-paiement`,
+      success_url: `${origin}/merci-paiement`,
       cancel_url: `${origin}/tarifs?payment=cancelled`,
       customer_email: data.userEmail || "client@les10doigts.com",
       customer_name: data.userName || "Client Les10Doigts",
