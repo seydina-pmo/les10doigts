@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { SubscribeButton } from "@/components/SubscribeButton";
 
 /**
  * Paywall — displayed when a free user tries to access level > 3.
@@ -48,14 +49,12 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a
-          href="https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4"
-          target="_blank"
-          rel="noopener noreferrer"
+        <SubscribeButton
+          id="paywall-subscribe"
           className="rounded-md bg-[#4361ee] px-6 py-3 text-sm font-medium text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#3451d1]"
         >
           S&apos;abonner — 10 €/mois
-        </a>
+        </SubscribeButton>
         <Link
           to="/app"
           className="rounded-md border border-[#e2e8f0] px-5 py-3 text-sm text-[#5a7a9a] transition hover:bg-[#f1f5f9]"
@@ -65,7 +64,7 @@ export function Paywall({ currentLevel }: { currentLevel: number }) {
       </div>
 
       <p className="mt-6 text-xs text-[#5a7a9a]">
-        Paiement securise via PayPal.
+        Paiement sécurisé.
       </p>
     </div>
   );
