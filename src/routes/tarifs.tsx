@@ -36,7 +36,6 @@ const plans: { name: string; price: string; note: string; bullets: string[]; cta
       "Certifications Bronze · Argent · Or",
     ],
     cta: "S'abonner",
-    href: "https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4",
     featured: true,
   },
   {
@@ -99,7 +98,7 @@ function Page() {
                 onClick={async (e) => {
                   const target = e.currentTarget;
                   target.disabled = true;
-                  target.innerText = "Chargement des moyens de paiement…";
+                  target.innerText = "Chargement…";
 
                   if (typeof window !== "undefined" && (window as any).fbq) {
                     (window as any).fbq("track", "InitiateCheckout", { value: 10.00, currency: "EUR" });
@@ -124,21 +123,19 @@ function Page() {
                     if (res.success && res.redirectUrl) {
                       window.location.href = res.redirectUrl;
                     } else {
-                      console.warn("[SasPay] Falling back to PayPal:", res.error);
-                      window.open("https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4", "_blank");
+                      alert(res.error || "Erreur de paiement SasPay");
                       target.disabled = false;
                       target.innerText = p.cta;
                     }
                   } catch (err: any) {
-                    console.error("[SasPay] Exception, opening PayPal:", err);
-                    window.open("https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4", "_blank");
+                    alert("Erreur réseau: " + err.message);
                     target.disabled = false;
                     target.innerText = p.cta;
                   }
                 }}
                 className="mt-8 inline-block w-full rounded-md bg-copper px-4 py-2.5 text-center text-sm font-medium text-paper transition hover:bg-copper-deep cursor-pointer disabled:opacity-75"
               >
-                {p.cta} (Wave · Orange Money · Carte)
+                {p.cta}
               </button>
             ) : p.isPayTech ? (
               <button

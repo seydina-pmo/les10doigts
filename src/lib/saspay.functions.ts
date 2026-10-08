@@ -4,6 +4,7 @@ export interface CreateSasPayInput {
   plan: "particulier" | "school";
   userId?: string;
   userEmail?: string;
+  userName?: string;
   originUrl?: string;
 }
 
@@ -13,8 +14,7 @@ export const createSasPayPayment = createServerFn({ method: "POST" })
     const apiKey = process.env.SASPAY_API_KEY || "sk_live_b827GiVRNHp4-jAbmu1nYegykchBxOptox-UgK4LPtI";
 
     const isSchool = data.plan === "school";
-    // 10 € / mois pour Particulier (~6 500 FCFA), 115 € / an pour École
-    const amount = isSchool ? 115.0 : 10.0;
+    const amountStr = isSchool ? "115.00" : "10.00";
     const description = isSchool
       ? "Abonnement Les 10 Doigts - École (1 An)"
       : "Abonnement Les 10 Doigts - Particulier";
@@ -22,11 +22,14 @@ export const createSasPayPayment = createServerFn({ method: "POST" })
     const origin = data.originUrl || "https://www.les10doigts.com";
 
     const body = {
-      amount,
+      amount: amountStr,
       currency: "EUR",
       description,
+      return_url: `${origin}/app?payment=success`,
       success_url: `${origin}/app?payment=success`,
       cancel_url: `${origin}/tarifs?payment=cancelled`,
+      customer_email: data.userEmail || "client@les10doigts.com",
+      customer_name: data.userName || "Client Les10Doigts",
       metadata: {
         userId: data.userId || null,
         userEmail: data.userEmail || null,
@@ -35,6 +38,8 @@ export const createSasPayPayment = createServerFn({ method: "POST" })
     };
 
     try {
+      console.log("[SasPay] Sending checkout request:", JSON.stringify(body));
+
       const response = await fetch("https://api.saspay.me/api/v1/checkout-sessions/", {
         method: "POST",
         headers: {
@@ -46,17 +51,17 @@ export const createSasPayPayment = createServerFn({ method: "POST" })
       });
 
       const json = await response.json();
+      console.log("[SasPay] Response:", response.status, JSON.stringify(json));
 
-      // Check if checkout_url or url is returned
       const redirectUrl = json.checkout_url || json.url || json.link || json.data?.checkout_url;
 
       if (response.ok && redirectUrl) {
         return { success: true, redirectUrl, id: json.id };
       } else {
-        console.error("[SasPay] API Error Response:", json);
+        console.error("[SasPay] API Error:", json);
         return {
           success: false,
-          error: json.message || json.detail || json.error || "Erreur lors de la création du paiement SasPay",
+          error: json.message || json.detail || json.error || JSON.stringify(json),
         };
       }
     } catch (err: any) {
