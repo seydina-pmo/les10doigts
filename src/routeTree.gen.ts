@@ -20,6 +20,7 @@ import { Route as MerciPaiementRouteImport } from './routes/merci-paiement'
 import { Route as MethodeRouteImport } from './routes/methode'
 import { Route as ParticuliersRouteImport } from './routes/particuliers'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiWebhooksSaspayRouteImport } from './routes/api.webhooks.saspay'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated.app'
 import { Route as AuthIndexRouteImport } from './routes/auth.index'
@@ -87,6 +88,11 @@ const ParticuliersRoute = ParticuliersRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksSaspayRoute = ApiWebhooksSaspayRouteImport.update({
+  id: '/api/webhooks/saspay',
+  path: '/api/webhooks/saspay',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TarifsRoute = TarifsRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/webhooks/saspay': typeof ApiWebhooksSaspayRoute
   '/tarifs': typeof TarifsRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/auth/ecole': typeof AuthEcoleRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/webhooks/saspay': typeof ApiWebhooksSaspayRoute
   '/tarifs': typeof TarifsRoute
   '/auth/ecole': typeof AuthEcoleRoute
   '/blog/temps-apprentissage': typeof BlogTempsApprentissageRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/methode': typeof MethodeRoute
   '/particuliers': typeof ParticuliersRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/webhooks/saspay': typeof ApiWebhooksSaspayRoute
   '/tarifs': typeof TarifsRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/auth/ecole': typeof AuthEcoleRoute
@@ -420,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/saspay': {
+      id: '/api/webhooks/saspay'
+      path: '/api/webhooks/saspay'
+      fullPath: '/api/webhooks/saspay'
+      preLoaderRoute: typeof ApiWebhooksSaspayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tarifs': {
       id: '/tarifs'
       path: '/tarifs'
@@ -572,6 +588,7 @@ const rootRouteChildren: RootRouteChildren = {
   MethodeRoute: MethodeRoute,
   ParticuliersRoute: ParticuliersRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiWebhooksSaspayRoute: ApiWebhooksSaspayRoute,
   TarifsRoute: TarifsRoute,
   AuthEcoleRoute: AuthEcoleRoute,
   BlogTempsApprentissageRoute: BlogTempsApprentissageRoute,

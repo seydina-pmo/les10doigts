@@ -93,7 +93,54 @@ function Page() {
                 </li>
               ))}
             </ul>
-            {p.isPayTech ? (
+            {p.featured ? (
+              <button
+                type="button"
+                onClick={async (e) => {
+                  const target = e.currentTarget;
+                  target.disabled = true;
+                  target.innerText = "Chargement des moyens de paiement…";
+
+                  if (typeof window !== "undefined" && (window as any).fbq) {
+                    (window as any).fbq("track", "InitiateCheckout", { value: 10.00, currency: "EUR" });
+                  }
+
+                  try {
+                    const { supabase } = await import("@/integrations/supabase/client");
+                    const { data: s } = await supabase.auth.getSession();
+                    const userId = s.session?.user?.id;
+                    const userEmail = s.session?.user?.email;
+
+                    const { createSasPayPayment } = await import("@/lib/saspay.functions");
+                    const res = await createSasPayPayment({
+                      data: {
+                        plan: "particulier",
+                        userId,
+                        userEmail,
+                        originUrl: window.location.origin,
+                      },
+                    });
+
+                    if (res.success && res.redirectUrl) {
+                      window.location.href = res.redirectUrl;
+                    } else {
+                      console.warn("[SasPay] Falling back to PayPal:", res.error);
+                      window.open("https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4", "_blank");
+                      target.disabled = false;
+                      target.innerText = p.cta;
+                    }
+                  } catch (err: any) {
+                    console.error("[SasPay] Exception, opening PayPal:", err);
+                    window.open("https://www.paypal.com/ncp/payment/U5YSW9HLQ5BL4", "_blank");
+                    target.disabled = false;
+                    target.innerText = p.cta;
+                  }
+                }}
+                className="mt-8 inline-block w-full rounded-md bg-copper px-4 py-2.5 text-center text-sm font-medium text-paper transition hover:bg-copper-deep cursor-pointer disabled:opacity-75"
+              >
+                {p.cta} (Wave · Orange Money · Carte)
+              </button>
+            ) : p.isPayTech ? (
               <button
                 onClick={async () => {
                   try {
